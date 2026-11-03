@@ -42,7 +42,7 @@ test('text analysis and enhancement use Comfy, preserve chat payloads and record
  const job=await store.submit({projectId:'default',model:'openai/gpt-5.6-sol',task:'image',format:'text',instruction:'Describe this product.',maxTokens:8192},[{kind:'image',contentType:'image/png',bytes:8,data:'data:image/png;base64,iVBORw0KGgo='}],'comfy-test');
  for(let i=0;i<100&&store.list('default').jobs[0].status==='RUNNING';i++)await new Promise(r=>setTimeout(r,10));
  assert.equal(store.list('default').jobs[0].status,'COMPLETED');assert.equal(store.spendingEntries()[0].provider,'comfy');assert.equal(store.spendingEntries()[0].actual,0.001);
- await writeFile(join(directory,'IMAGE_PROMPT_PRESETS.txt'),'# No presets');
+
  const billing=[];const enhancer=createPromptEnhancer({directory,fetchImpl,trackSpending:async entry=>billing.push({...entry})});
  const result=await enhancer.enhance({projectId:'default',mode:'image',model:'nano-pro',prompt:'a vase'},'comfy-test');assert.equal(result.enhanced,'A red vase on a table.');assert.equal(billing.at(-1).provider,'comfy');assert.equal(calls.length,2);
 });

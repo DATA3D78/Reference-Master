@@ -32,7 +32,7 @@ export function createPromptEnhancer({directory,fetchImpl=fetch,trackSpending=as
   const running=new Map();
   async function config(mode){
     if(!Object.hasOwn(PRESET_FILES,mode))throw fail('Choose Image or Video.');
-    let text;try{text=await readFile(join(directory,PRESET_FILES[mode]),'utf8');}catch{throw fail(`Cannot read ${PRESET_FILES[mode]}. Keep this text file in the CUSTOM folder beside the launcher.`,503);}
+    let text;try{text=await readFile(join(directory,PRESET_FILES[mode]),'utf8');}catch(error){if(error.code==='ENOENT')text='';else throw fail(`Cannot read optional preset file ${PRESET_FILES[mode]}.`,503);}
     return {filename:PRESET_FILES[mode],relativePath:'CUSTOM/'+PRESET_FILES[mode],model:ENHANCER_MODEL,presets:parsePromptPresets(text,mode)};
   }
   async function enhance(body,key){
