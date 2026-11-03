@@ -84,7 +84,7 @@ export class LlmWorkspace{
   error(text){$('#llm-error').textContent=text;$('#llm-error').hidden=!text;}
   setBusy(value){this.busy=value;this.actions.busy(value);this.sync();}
   async loadConfig(){const config=await this.actions.api('/api/llm/config');this.keyConfigured=config.keyConfigured;this.detailedStructure=!!config.detailedStructure;this.sync();this.actions.connection();}
-  openSettings(){$('#llm-api-key').value='';$('#llm-settings-error').hidden=true;$('#llm-settings').showModal();}
+  openSettings(){if(this.actions.openSettings)return this.actions.openSettings();$('#llm-api-key').value='';$('#llm-settings-error').hidden=true;$('#llm-settings').showModal();}
   async configureKey(key){$('#llm-save-key').disabled=true;try{const r=await this.actions.post('/api/llm/settings',{key});this.keyConfigured=r.keyConfigured;$('#llm-api-key').value='';$('#llm-settings').close();this.sync();this.actions.connection();this.actions.toast(key?'Comfy connected.':'Comfy disconnected for this session.');}catch(error){$('#llm-settings-error').textContent=error.message;$('#llm-settings-error').hidden=false;}finally{$('#llm-save-key').disabled=false;}}
   sync(){
     const task=$('#llm-task').value,video=task==='video',refine=task==='refine';

@@ -162,7 +162,7 @@ function updateCost(){
 }
 function updateConnection(){
   $('#settings-nav').title='Appearance, API keys and prompt settings';updateCost();
-  $('#disconnect').hidden=!state.keyConfigured;
+
 }
 
 async function clearReferences(){
@@ -617,7 +617,12 @@ $('#new-project-folder').addEventListener('click',async()=>{
  catch(e){$('#project-error').hidden=false;$('#project-error').textContent=e.message;}
  finally{button.disabled=false;$('#project-save').disabled=false;}
 });
+async function refreshKeyStatus(){
+  try{const config=await api('/api/bootstrap');state.csrf=config.csrf;state.keyConfigured=!!config.keyConfigured;if(llm)llm.keyConfigured=state.keyConfigured;updateConnection();return true;}catch{return false;}
+}
+window.addEventListener('focus',()=>{void refreshKeyStatus();});
 async function showSettings(){
+  await refreshKeyStatus();
   void loadMediaStorage();
   $('#settings-dialog').showModal();
   const container=$('#settings-file-links'),status=$('#settings-file-status');
@@ -637,22 +642,18 @@ async function showSettings(){
       });
       container.append(button);
     }
-    status.textContent=offline?'The local server is unavailable. Start the app and reload to open your API key file.':config.enabled?'Files open in TextEdit on this Mac.':'Text-file links are available in the local Mac app.';
+    status.textContent=offline?'The local server is unavailable. Start the app and reload to open your API key file.':config.enabled?(state.keyConfigured?'Comfy key detected. Open the file to change it.':'No Comfy key found. Open the file, paste your key, and save it.'):'Text-file links are available in the local Mac app.';
   }catch{status.textContent='Reopen the updated app to access your settings files.';}
 }
-function showConnection(provider){$('#api-key').value='';$('#settings-error').hidden=true;updateConnection();$('#connection-dialog').showModal();}
+async function showConnection(){
+  await refreshKeyStatus();
+  if(state.keyConfigured){toast('Your saved Comfy key is connected. Try your action again.');return;}
+  await showSettings();$('#settings-files-title').scrollIntoView({block:'center'});
+}
 $('#settings-nav').addEventListener('click',showSettings);
 $('#close-settings').addEventListener('click',()=>$('#settings-dialog').close());
 $('#settings-done').addEventListener('click',()=>$('#settings-dialog').close());
-$('#close-connection').addEventListener('click',()=>$('#connection-dialog').close());
-$('#settings-form').addEventListener('submit',async e=>{
-  e.preventDefault();const key=$('#api-key').value.trim();if(!key){$('#settings-error').textContent='Paste your Comfy API key first.';$('#settings-error').hidden=false;return;}
-  $('#save-key').disabled=true;
-  try{const r=await post('/api/settings',{key});state.keyConfigured=r.keyConfigured;$('#api-key').value='';$('#connection-dialog').close();updateConnection();toast('API key configured. You’re ready to generate.');}
-  catch(e){$('#settings-error').textContent=e.message;$('#settings-error').hidden=false;}finally{$('#save-key').disabled=false;}
-});
-$('#disconnect').addEventListener('click',async()=>{try{await post('/api/settings',{key:''});state.keyConfigured=false;updateConnection();$('#connection-dialog').close();toast('API key removed from this session.');}catch(e){$('#settings-error').textContent=e.message;$('#settings-error').hidden=false;}});
-$('#connection-dialog').addEventListener('close',()=>$('#api-key').value='');
+$('#settings-dialog').addEventListener('close',()=>{void refreshKeyStatus();});
 function setView(view){
   if(['ideation','studio','llm','history','audio','tools','color','effects'].includes(view))view='creator';
   // Restore older saved History views into the unified Create feed.
@@ -1097,14 +1098,14 @@ try{
   const config=await api('/api/bootstrap');if(!config.features?.comfyRouter)throw Error('Open Apply Studio Update.command, then refresh to activate Comfy for image and video models.');state.csrf=config.csrf;state.keyConfigured=config.keyConfigured;state.serverModels=config.models;state.features=config.features||{};
   if(state.features.llm){
     const {LlmWorkspace}=await import('./llm.js?v=unified-upload-entry');const style=document.createElement('link');style.rel='stylesheet';style.href='/llm.css?v=reference-picker';document.head.append(style);
-    llm=new LlmWorkspace({api,post,toast,icon,useShoot:job=>{if(!shoot){toast('Open Apply Studio Update.command, then refresh to activate SHOOT.');return;}setView('shoot');void shoot.importOutput(job);},projectName:id=>[...state.projects,...state.deletedProjects].find(p=>p.id===id)?.name||'Project',deletionEnabled:()=>!!state.features.llmDeletion,openAssets,concurrent:!!state.features.concurrentGenerations,connection:updateConnection,busy:value=>{state.llmBusy=value;updateButton();},usePrompt:(mode,text)=>{if(state.submitting||state.uploading){toast('Wait for reference preparation to finish.');return;}changeMode(mode);$('#prompt').value=text;updatePromptCount();revealComposer();$('#prompt').focus();toast('Text copied into your '+mode+' prompt. Review it, then generate when ready.');}});
+    llm=new LlmWorkspace({api,post,toast,icon,openSettings:showConnection,useShoot:job=>{if(!shoot){toast('Open Apply Studio Update.command, then refresh to activate SHOOT.');return;}setView('shoot');void shoot.importOutput(job);},projectName:id=>[...state.projects,...state.deletedProjects].find(p=>p.id===id)?.name||'Project',deletionEnabled:()=>!!state.features.llmDeletion,openAssets,concurrent:!!state.features.concurrentGenerations,connection:updateConnection,busy:value=>{state.llmBusy=value;updateButton();},usePrompt:(mode,text)=>{if(state.submitting||state.uploading){toast('Wait for reference preparation to finish.');return;}changeMode(mode);$('#prompt').value=text;updatePromptCount();revealComposer();$('#prompt').focus();toast('Text copied into your '+mode+' prompt. Review it, then generate when ready.');}});
   }
   creator=new CharacterCreator({api,post,icon,busy:value=>{state.uploading+=value?1:-1;updateButton();},submitted:job=>{state.libraryVersion++;state.jobs.unshift(job);state.historySignature='';renderJobs();}});
   referenceWorkspace=new ReferenceWorkspace({api,post,busy:value=>{state.uploading+=value?1:-1;updateButton();},submitted:job=>{state.libraryVersion++;state.jobs.unshift(job);state.historySignature='';renderJobs();}});
   outfit=new OutfitWorkspace({api,post,icon,project:()=>state.projectId,busy:value=>{state.uploading+=value?1:-1;updateButton();},submitted:job=>{state.libraryVersion++;state.jobs.unshift(job);state.historySignature='';renderJobs();}});
   if(state.features.shoot){
     const {ShootWorkspace}=await import('./shoot.js?v=product-refinement');const style=document.createElement('link');style.rel='stylesheet';style.href='/shoot.css';document.head.append(style);
-    shoot=new ShootWorkspace({api,post,toast,icon,subjectTypesEnabled:()=>!!state.features.shootSubjectTypes,favorite:favoriteResult,saveAsset,deleteResult:(jobId,mediaId,projectId)=>deleteGeneration(jobId,{mediaId},projectId),deleteFailedResult:(jobId,taskIndex,projectId)=>deleteGeneration(jobId,{taskIndex},projectId),deleteResults:deleteGenerations,assetsEnabled:()=>!!state.features.assetLibrary,preview:previewResult,projectName:id=>[...state.projects,...state.deletedProjects].find(p=>p.id===id)?.name||'Project',connect:showConnection,connectLlm:()=>llm?.openSettings(),context:()=>({keyConfigured:state.keyConfigured}),busy:value=>{state.uploading+=value?1:-1;updateButton();},submitted:job=>{state.libraryVersion++;state.jobs=state.jobs.filter(j=>j.id!==job.id);state.jobs.unshift(job);state.historySignature='';renderJobs();}});
+    shoot=new ShootWorkspace({api,post,toast,icon,subjectTypesEnabled:()=>!!state.features.shootSubjectTypes,favorite:favoriteResult,saveAsset,deleteResult:(jobId,mediaId,projectId)=>deleteGeneration(jobId,{mediaId},projectId),deleteFailedResult:(jobId,taskIndex,projectId)=>deleteGeneration(jobId,{taskIndex},projectId),deleteResults:deleteGenerations,assetsEnabled:()=>!!state.features.assetLibrary,preview:previewResult,projectName:id=>[...state.projects,...state.deletedProjects].find(p=>p.id===id)?.name||'Project',connect:showConnection,connectLlm:showConnection,context:()=>({keyConfigured:state.keyConfigured}),busy:value=>{state.uploading+=value?1:-1;updateButton();},submitted:job=>{state.libraryVersion++;state.jobs=state.jobs.filter(j=>j.id!==job.id);state.jobs.unshift(job);state.historySignature='';renderJobs();}});
   }
   if(state.features.assetLibrary){
     const {AssetLibrary}=await import('./assets.js?v=asset-removal');const style=document.createElement('link');style.rel='stylesheet';style.href='/assets.css?v=asset-removal';document.head.append(style);
@@ -1112,7 +1113,7 @@ try{
   }
   if(state.features.promptEnhancer){
     const {PromptEnhancer}=await import('./prompt-enhancer.js');
-    promptEnhancer=new PromptEnhancer({api,post,context:()=>({projectId:state.projectId,mode:state.mode,model:state.model,inputType:state.inputType,view:state.view}),busy:value=>{state.enhancing=value;updateButton();},setPrompt:text=>{$('#prompt').value=text;updatePromptCount();error('');},openSettings:()=>llm?.openSettings()});
+    promptEnhancer=new PromptEnhancer({api,post,context:()=>({projectId:state.projectId,mode:state.mode,model:state.model,inputType:state.inputType,view:state.view}),busy:value=>{state.enhancing=value;updateButton();},setPrompt:text=>{$('#prompt').value=text;updatePromptCount();error('');},openSettings:showConnection});
   }else $('#enhance-toggle').addEventListener('click',()=>toast('Open Apply Studio Update.command once, then refresh to activate the prompt enhancer.'));
   if(config.mediaStorage)mediaStorage=config.mediaStorage;
   state.projects=config.projects||[{id:'default',name:'My first project'}];state.deletedProjects=config.deletedProjects||[];let savedProject;try{savedProject=localStorage.getItem('fwrd-project');}catch{}
