@@ -66,7 +66,7 @@ function hydrateIcons(root=document){root.querySelectorAll('[data-icon]').forEac
 hydrateIcons();
 $('#mixed-reference-fields').innerHTML=['image','video','audio'].map(kind=>`<div class="reference-group" id="${kind}-reference-group"><div class="label-row"><label id="${kind}-reference-label" for="${kind}-reference-input"></label><span id="${kind}-ref-count" class="muted"></span></div><button type="button" class="dropzone compact-dropzone reference-picker-drop" data-reference-picker="${kind}" aria-haspopup="dialog" aria-controls="reference-library" aria-label="Add ${kind} references: upload, Assets or Favorites"><strong>Drop ${kind==='audio'?'audio':kind+'s'} or <em>choose references</em></strong><span class="reference-source-methods">Upload · Assets · Outfit · Character · ID · Favorites</span><small id="${kind}-upload-hint"></small></button><input type="file" id="${kind}-reference-input" class="visually-hidden" accept="${kind==='image'?'image/png,image/jpeg,image/webp':kind==='video'?'video/mp4,video/quicktime,.mov':'audio/mpeg,audio/wav,.mp3,.wav'}" multiple><div id="${kind}-references" class="references"></div><p id="${kind}-reference-note" class="hint"></p></div>`).join('')+'<p id="mixed-ref-count" class="hint" aria-live="polite"></p>';
 const esc = value => String(value ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const state={ mode:'image',model:'nano-pro',inputType:'text',ratio:'1:1',references:[],jobs:[],csrf:'',keyConfigured:false,falKeyConfigured:false,view:'studio',submitting:false,uploading:0,ready:false,toastTimer:0,historySignature:'',dragging:false,favoritePending:new Set(),libraryVersion:0 };
+const state={ mode:'image',model:'nano-pro',inputType:'text',ratio:'1:1',references:[],jobs:[],csrf:'',keyConfigured:false,view:'studio',submitting:false,uploading:0,ready:false,toastTimer:0,historySignature:'',dragging:false,favoritePending:new Set(),libraryVersion:0 };
 state.serverModels=null;state.features={};state.projectId='default';state.projects=[];state.deletedProjects=[];state.projectMutation=false;state.projectsVersion=0;state.projectDrafts=new Map();state.switching=false;state.activeProjectIds=[];state.deletionPending=new Set();
 let creator=null,outfit=null,shoot=null,llm=null,promptEnhancer=null,assetLibrary=null,mediaTools=null,audioWorkspace=null,editing=null;let assetReturnView='studio';state.llmBusy=false;state.enhancing=false;
 const currentModel=()=>MODELS.find(m=>m.id===state.model);
@@ -122,7 +122,7 @@ function modelOptions(){
   $('#model').value=state.model;
   const pending=models.filter(m=>!m.available);
   $('#model-availability').hidden=!pending.length;
-  $('#model-availability').textContent=pending.map(m=>m.name+': fal.ai integration unavailable.').join(' ');
+  $('#model-availability').textContent=pending.map(m=>m.name+': Comfy Router integration unavailable.').join(' ');
 }
 let activeModelOption='',modelSearch='',modelSearchTime=0;
 function closeModelMenu(){
@@ -153,12 +153,12 @@ function updateModelNote(){
 const generationPricing=pricePreview((url,body)=>post(url,body),estimate=>{
   $('#cost-label').textContent=priceLabel(estimate);$('#cost-amount').textContent=priceText(estimate);
   $('#cost-estimate').classList.toggle('cost-unavailable',!estimate.available);
-  const detail=estimate.source==='reference'?estimate.reason:estimate.available?'Published fal.ai estimate for these settings. Final billing may differ.':estimate.reason||'Add a prompt and references to estimate this request.';
+  const detail=estimate.source==='reference'?estimate.reason:estimate.available?'Published Comfy Router estimate for these settings. Final billing may differ.':estimate.reason||'Add a prompt and references to estimate this request.';
   $('#cost-estimate').title=detail;$('#cost-estimate').setAttribute('aria-description',detail);
 });
 function updateCost(){
   generationPricing.update({...composerSettings(),kind:'generation',referenceIds:state.references.map(r=>r.id)},
-    {fallback:estimateReferenceCost(composerSettings(),state.references,new Date(),{preview:true}),enabled:!!state.csrf&&state.keyConfigured&&!!$('#prompt').value.trim(),reason:state.keyConfigured?'Add a prompt to estimate this request.':'Connect fal.ai to see an estimate.'});
+    {fallback:estimateReferenceCost(composerSettings(),state.references,new Date(),{preview:true}),enabled:!!state.csrf&&state.keyConfigured&&!!$('#prompt').value.trim(),reason:state.keyConfigured?'Add a prompt to estimate this request.':'Connect Comfy Router to see an estimate.'});
 }
 function updateConnection(){
   $('#settings-nav').title='Appearance, API keys and prompt settings';updateCost();
@@ -654,7 +654,7 @@ $('#settings-form').addEventListener('submit',async e=>{
 $('#disconnect').addEventListener('click',async()=>{try{await post('/api/settings',{key:''});state.keyConfigured=false;updateConnection();$('#connection-dialog').close();toast('API key removed from this session.');}catch(e){$('#settings-error').textContent=e.message;$('#settings-error').hidden=false;}});
 $('#connection-dialog').addEventListener('close',()=>$('#api-key').value='');
 function setView(view){
-  if(['ideation','studio','llm','history'].includes(view))view='creator';
+  if(['ideation','studio','llm','history','audio','tools','color','effects'].includes(view))view='creator';
   // Restore older saved History views into the unified Create feed.
   if(view==='history')view='studio';
   if(['color','effects'].includes(view)&&!editing){toast('Open Apply Studio Update.command, then refresh to activate the grading editor.');return;}
@@ -842,7 +842,7 @@ function renderJobs(){
       const bad=task.status==='FAILED'||task.status==='UNKNOWN';
       const title=task.status==='UNKNOWN'?'Submission needs checking':bad?'Generation couldn’t finish':task.status==='SUBMITTING'?'Sending to the model':task.status==='IN_PROGRESS'?'Bringing your idea to life':'Waiting for the model';
       const detail=task.error||task.notice||(task.status==='IN_QUEUE'&&Number.isInteger(task.queuePosition)?`Queue position: ${task.queuePosition}. You can keep this tab open or come back later.`:'Your generation continues while this local app is running.');
-      return `<article class="media-card task-placeholder ${bad?'error-state':''}" role="status">${bad?`<button type="button" class="delete-generation delete-failed-generation" data-delete-failed="${task.taskIndex??index}" aria-label="Delete ${task.status==='FAILED'?'failed generation':'uncertain submission'}" title="Delete this generation">${icon('trash')}</button>${icon('orbit')}`:'<span class="spinner"></span>'}<strong>${esc(title)}</strong><p>${esc(detail)}</p>${task.requestId?`<small class="muted">Request: ${esc(task.requestId)}</small>`:''}${bad?`<a class="text-button" href="${job.provider==='comfy'?'https://platform.comfy.org':'https://fal.ai/dashboard/requests'}" target="_blank" rel="noopener noreferrer">${job.provider==='comfy'?'Open Comfy platform':'Open fal dashboard'} ↗</a>`:''}</article>`;
+      return `<article class="media-card task-placeholder ${bad?'error-state':''}" role="status">${bad?`<button type="button" class="delete-generation delete-failed-generation" data-delete-failed="${task.taskIndex??index}" aria-label="Delete ${task.status==='FAILED'?'failed generation':'uncertain submission'}" title="Delete this generation">${icon('trash')}</button>${icon('orbit')}`:'<span class="spinner"></span>'}<strong>${esc(title)}</strong><p>${esc(detail)}</p>${task.requestId?`<small class="muted">Request: ${esc(task.requestId)}</small>`:''}${bad?`<a class="text-button" href="${job.provider==='comfy'?'https://platform.comfy.org':'https://Comfy Router/dashboard/requests'}" target="_blank" rel="noopener noreferrer">${job.provider==='comfy'?'Open Comfy platform':'Open fal dashboard'} ↗</a>`:''}</article>`;
     }).join('');
     const time=new Date(job.createdAt).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
     const duration=job.settings.duration+(Number.isFinite(Number(job.settings.duration))?'s':'');
@@ -1094,21 +1094,7 @@ $('#project-list').addEventListener('click',e=>{const remove=e.target.closest('[
 $('#project-form').addEventListener('submit',async e=>{e.preventDefault();const button=$('#project-save');button.disabled=true;try{const r=await post('/api/projects',{type:state.editProject?'rename':'create',id:state.editProject||undefined,name:$('#project-name').value.trim(),mediaStorage:state.editProject?undefined:{automatic:$('#new-project-auto-save').checked,...(newProjectFolderToken?{folderToken:newProjectFolderToken}:{})}});state.projects=r.projects;state.deletedProjects=r.deletedProjects||[];state.projectsVersion++;$('#project-dialog').close();renderProjects();if(!state.editProject)await switchProject(r.project.id,'ideation');}catch(e){$('#project-error').hidden=false;$('#project-error').textContent=e.message;}finally{button.disabled=false;}});
 syncControls();
 try{
-  const config=await api('/api/bootstrap');if(!config.features?.comfyRouter)throw Error('Open Apply Studio Update.command, then refresh to activate Comfy for image and video models.');state.csrf=config.csrf;state.keyConfigured=config.keyConfigured;state.falKeyConfigured=!!config.falKeyConfigured;state.serverModels=config.models;state.features=config.features||{};
-  if(state.features.localEditing&&state.features.radianceGrading&&state.features.h264EditingExport){const {EditingWorkspace}=await import('./editing.js?v=prompt-details');editing=new EditingWorkspace({api,toast,icon,metadata,mediaURL,describeSource:resolveMediaPresentation,presetsEnabled:state.features.editingPresets&&state.features.effectStack,context:()=>({projectId:state.projectId,jobs:state.jobs,projects:[...state.projects,...state.deletedProjects]}),busy:value=>{state.uploading+=value?1:-1;updateButton();}});}
-  if(state.features.audioGeneration){
-    const {AudioWorkspace}=await import('./audio.js?v=unified-upload-entry');const style=document.createElement('link');style.rel='stylesheet';style.href='/audio.css?v=unified-upload-entry';document.head.append(style);
-    audioWorkspace=new AudioWorkspace({api,post,toast,icon,metadata,fileInfo,findResult,mediaURL,connect:showConnection,context:()=>({projectId:state.projectId,jobs:state.jobs,keyConfigured:state.keyConfigured,falKeyConfigured:state.falKeyConfigured}),busy:value=>{state.uploading+=value?1:-1;updateButton();},submitted:job=>{state.libraryVersion++;state.jobs.unshift(job);state.historySignature='';renderJobs();}});
-  }
-  if(state.features.mediaTools){
-    const {MediaTools}=await import('./tools.js?v=unified-upload-entry');const style=document.createElement('link');style.rel='stylesheet';style.href='/tools.css?v=unified-upload-entry';document.head.append(style);
-    mediaTools=new MediaTools({api,post,toast,icon,metadata,fileInfo,findResult,mediaURL,connect:showConnection,context:()=>({projectId:state.projectId,jobs:state.jobs,keyConfigured:state.keyConfigured,falKeyConfigured:state.falKeyConfigured,enabled:!!state.features.mediaTools&&!!state.features.seedvrVideo}),busy:value=>{state.uploading+=value?1:-1;updateButton();},submitted:job=>{state.libraryVersion++;state.jobs.unshift(job);state.historySignature='';renderJobs();}});
-  }
-  if(state.features.spending){
-    const {SpendingMeter}=await import('./spending.js');new SpendingMeter({api,post});
-  }else{
-    $('#spending-caption').textContent='Update needed';$('#spending-period').disabled=true;$('#spending-open').addEventListener('click',()=>toast('Open Apply Studio Update.command once, then refresh to activate spending totals.'));
-  }
+  const config=await api('/api/bootstrap');if(!config.features?.comfyRouter)throw Error('Open Apply Studio Update.command, then refresh to activate Comfy for image and video models.');state.csrf=config.csrf;state.keyConfigured=config.keyConfigured;state.serverModels=config.models;state.features=config.features||{};
   if(state.features.llm){
     const {LlmWorkspace}=await import('./llm.js?v=unified-upload-entry');const style=document.createElement('link');style.rel='stylesheet';style.href='/llm.css?v=reference-picker';document.head.append(style);
     llm=new LlmWorkspace({api,post,toast,icon,useShoot:job=>{if(!shoot){toast('Open Apply Studio Update.command, then refresh to activate SHOOT.');return;}setView('shoot');void shoot.importOutput(job);},projectName:id=>[...state.projects,...state.deletedProjects].find(p=>p.id===id)?.name||'Project',deletionEnabled:()=>!!state.features.llmDeletion,openAssets,concurrent:!!state.features.concurrentGenerations,connection:updateConnection,busy:value=>{state.llmBusy=value;updateButton();},usePrompt:(mode,text)=>{if(state.submitting||state.uploading){toast('Wait for reference preparation to finish.');return;}changeMode(mode);$('#prompt').value=text;updatePromptCount();revealComposer();$('#prompt').focus();toast('Text copied into your '+mode+' prompt. Review it, then generate when ready.');}});

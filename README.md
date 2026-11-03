@@ -20,7 +20,7 @@ npm run setup
 npm start
 ```
 
-Open **http://127.0.0.1:4322/**. Keep the terminal open; Ctrl+C stops the server. There is no build step or npm dependency installation required. Bundled browser dependencies are included.
+Open **http://127.0.0.1:4322/**. Keep the terminal open; Ctrl+C stops the server. There is no build step or npm dependency installation required.
 
 Before generating, edit `CUSTOM/REFERENCE_MASTER_COMFY_KEY.txt` and paste your own [Comfy Router](https://comfy.org/platform/router/) API key on one line. You can also click **Settings → Open API key file**. The button opens this repository’s own `CUSTOM/REFERENCE_MASTER_COMFY_KEY.txt`, creating a blank file if needed; it never points to the developer’s private key file. Keys and generated work stay out of Git. Never commit your credentials.
 
@@ -36,7 +36,7 @@ If the default port is busy, use `PORT=4323 npm start` on macOS/Linux or `$env:P
 - Comfy Router image/video generation, descriptions and prompt refinement.
 - Comfy Chrome and other interface themes.
 
-Music and legacy utility tools are not exposed in the current interface. Their historical source may remain for compatibility. Old provider histories retain their original billing attribution. New enabled model calls use Comfy Router.
+All enabled model calls use Comfy Router. Audio generation, utility tools, grading and effects are not included in this release.
 
 ## Modify the code
 
@@ -56,10 +56,10 @@ Refresh your browser after frontend edits. Restart the server after backend edit
 
 ## Validation and platform support
 
-`npm test` runs the current Comfy migration checks without paid calls. `npm run test:legacy` runs the inherited suite; some tests still assert the original provider/UI behavior and are not current release gates. Live model availability depends on your Comfy account. This export does not claim live generation testing for every model.
+`npm test` runs the current Comfy migration checks without paid calls. Live model availability depends on your Comfy account. This export does not claim live generation testing for every model.
 
 The app is developed on macOS. Terminal startup is portable, but Windows/Linux have not been fully tested. On macOS, setup builds the optional folder picker when Xcode Command Line Tools are available. Without it, media still saves to the default local folder. Native file-opening/folder-picker helpers are macOS-specific; edit key files manually on other systems. Native app installers and hosting deployment are not included in this source release.
 
 ## License
 
-Project source is distributed under **GPL-3.0-only**; see [LICENSE](LICENSE). You may use, modify and redistribute it under those terms. Bundled third-party components retain their licenses and notices; see [public/vendor/README.md](public/vendor/README.md). Keep those notices and corresponding source archives when redistributing.
+Project source is distributed under **GPL-3.0-only**; see [LICENSE](LICENSE). You may use, modify and redistribute it under those terms.

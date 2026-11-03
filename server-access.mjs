@@ -39,5 +39,5 @@ export async function studioRuntime(root,env=process.env){
   let proxySecret;
   if(env.FRAME_PROXY_SECRET_FILE)proxySecret=(await readFile(env.FRAME_PROXY_SECRET_FILE,'utf8')).trim();
   createRequestAccess({publicOrigin,proxySecret});
-  return {host,port,publicOrigin,options:{dataDir,comfyKeyFile:join(customDir,'REFERENCE_MASTER_COMFY_KEY.txt'),keyFile:join(customDir,'FAL_API_KEY_HERE.txt'),falKeyFile:join(customDir,'FAL_API_KEY_HERE.txt'),openRouterKeyFile:join(customDir,'OPENROUTER_API_KEY_HERE.txt'),promptPresetDir:customDir,access:{publicOrigin,proxySecret}}};
+  return {host,port,publicOrigin,options:{dataDir,comfyKeyFile:join(customDir,'REFERENCE_MASTER_COMFY_KEY.txt'),promptPresetDir:customDir,access:{publicOrigin,proxySecret}}};
 }

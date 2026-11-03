@@ -2,8 +2,6 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {MODELS,capabilities,buildInput} from '../public/models.js';
-import {buildAudioInput} from '../public/audio-models.js';
-import {TOOLS,buildToolInput} from '../public/tools-models.js';
 import {normalizeOutputs,normalizeEstimate,validRouterURL,queueURLs,serializeInput,retryDelay,createComfyRouter} from '../comfy-router.mjs';
 import {validMediaURL,publicAddress} from '../public-media-fetch.mjs';
 const ref=(kind='image')=>({kind,contentType:kind==='image'?'image/png':kind==='video'?'video/mp4':'audio/wav',bytes:100,data:`data:${kind}/${kind==='image'?'png':kind==='video'?'mp4':'wav'};base64,aGVsbG8=`,metadata:{width:512,height:512,duration:2}});
@@ -39,7 +37,7 @@ test('live estimates distinguish exact, range, unknown and zero; output count mu
 test('credentials cannot leave api.comfy.org; redirects, private media and oversized bodies are refused',async()=>{
  let calls=0;const client=createComfyRouter(async(url,opts)=>{calls++;assert.equal(opts.headers['X-API-Key'],'test-secret');assert.equal(opts.headers.Authorization,undefined);assert.equal(opts.redirect,'error');return Response.json({ok:true});});
  await client.request('https://api.comfy.org/v2/models/bfl/flux-3-image/estimate',{method:'POST',input:{prompt:'hi'},credential:'test-secret'});
- for(const url of ['https://queue.fal.run/fal-ai/test','https://api.comfy.org.evil.com/v2/models/a/b','https://secret@api.comfy.org/v2/models/a/b','https://api.comfy.org/admin','http://api.comfy.org/v2/models/a/b']){assert(!validRouterURL(url));await assert.rejects(client.request(url,{credential:'test-secret'}));}
+ for(const url of ['https://other-provider.example/models/test','https://api.comfy.org.evil.com/v2/models/a/b','https://secret@api.comfy.org/v2/models/a/b','https://api.comfy.org/admin','http://api.comfy.org/v2/models/a/b']){assert(!validRouterURL(url));await assert.rejects(client.request(url,{credential:'test-secret'}));}
  assert.equal(calls,1);assert.throws(()=>queueURLs('../bad','x'));assert.throws(()=>serializeInput({data:'a'.repeat(100*1024*1024)}),{status:413});
  for(const address of ['127.0.0.1','10.1.1.1','169.254.169.254','100.64.0.1','192.168.0.1'])assert(!publicAddress({address,family:4}));
  for(const address of ['::1','::ffff:127.0.0.1','fd00::1','fe80::1'])assert(!publicAddress({address,family:6}));

@@ -11,14 +11,10 @@ export async function openTextFile(path){
 
 // The client chooses a fixed ID, never a filesystem path or a shell command.
 // File contents (especially credentials) never pass through this endpoint.
-export function createSettingsFiles({keyFile,falKeyFile,comfyKeyFile,openRouterKeyFile,promptPresetDir,hosted=false,platform=process.platform,openFile=openTextFile}){
+export function createSettingsFiles({comfyKeyFile,hosted=false,platform=process.platform,openFile=openTextFile}){
   const enabled=!hosted&&platform==='darwin';
   const entries=[
     {id:'comfy',label:'Comfy API key · Reference Master',path:comfyKeyFile},
-    {id:'fal',label:'fal.ai API key · images, video, audio & tools',path:falKeyFile||keyFile},
-    {id:'openrouter',label:'OpenRouter API key',path:openRouterKeyFile},
-    {id:'image-prompts',label:'Image prompt presets',path:promptPresetDir&&join(promptPresetDir,'IMAGE_PROMPT_PRESETS.txt')},
-    {id:'video-prompts',label:'Video prompt presets',path:promptPresetDir&&join(promptPresetDir,'VIDEO_PROMPT_PRESETS.txt')},
   ];
   return {
     list:()=>({enabled,files:entries.map(({id,label,path})=>({id,label,filename:path?basename(path):null,available:enabled&&!!path}))}),

@@ -8,8 +8,7 @@
   "scripts": {
     "setup": "node scripts/setup.mjs",
     "start": "node server.mjs",
-    "test": "node --test test/reference-master-comfy.test.mjs test/comfy-models.test.mjs",
-    "test:legacy": "node --test test/*.test.mjs"
+    "test": "node --test test/*.test.mjs"
   },
   "engines": {
     "node": ">=24.5.0"

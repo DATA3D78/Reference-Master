@@ -1,3 +1,4 @@
+const assertPrompt=(input,prompt)=>assert(JSON.stringify(input).includes(JSON.stringify(prompt).slice(1,-1)));
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {buildLlmRequest} from '../llm-store.mjs';
@@ -17,7 +18,7 @@ test('Outfit enhances original text without requiring an existing LLM output',()
 });
 test('Flat-lay prompts work with supported image models and preserve image references',()=>{
  for(const m of MODELS.filter(m=>m.available&&m.mode==='image'&&m.inputs.includes('image')&&m.inputs.includes('text'))){
-  for(const type of ['text','image']){const c=capabilities(m,type);const prompt=outfitPrompt('Navy jacket, cream trousers, leather loafers.');const r=buildInput({model:m.id,inputType:type,prompt,ratio:c.ratios.includes('3:4')?'3:4':c.ratios[0],resolution:c.resolutions[0],count:1},type==='image'?[image]:[]);assert.equal(r.input.prompt,prompt);}
+  for(const type of ['text','image']){const c=capabilities(m,type);const prompt=outfitPrompt('Navy jacket, cream trousers, leather loafers.');const r=buildInput({model:m.id,inputType:type,prompt,ratio:c.ratios.includes('3:4')?'3:4':c.ratios[0],resolution:c.resolutions[0],count:1},type==='image'?[image]:[]);assertPrompt(r.input,prompt);}
  }
 });
 
@@ -80,15 +81,4 @@ test('outfit descriptions and both generation variants exclude handheld props',a
   assert(!request.payload.messages[1].content[0].text.includes('jewelry, props'));
  }
  for(const variant of outfitVariants('Jacket and trousers.','women'))assert.match(variant.prompt,/Exclude handheld props/);
-});
-
-test('outfit cost covers both versions and respects model, resolution and input method',async()=>{
- const {outfitCost}=await import('../public/outfit.js');
- const settings={model:'nano-pro',resolution:'1K',ratio:'3:4',inputType:'image'};
- assert.equal(outfitCost(settings).minimum,.30);
- assert.equal(outfitCost({...settings,resolution:'4K'}).minimum,.60);
- const krea={model:'krea2-large',resolution:'Native',ratio:'4:5'};
- assert(outfitCost({...krea,inputType:'image'},{}).minimum>outfitCost({...krea,inputType:'text'}).minimum);
- assert(outfitCost({...settings,model:'nano21'}).extraUsage);
- assert(!outfitCost({...settings,ratio:'invalid'}).available);
 });

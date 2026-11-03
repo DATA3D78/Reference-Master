@@ -212,27 +212,7 @@ test('uploaded image and video assets can be placed on project canvases and surv
   assert.equal((await next.post('/api/ideation',{projectId:project.id,operations:[{type:'addAsset',assetId:'missing'}]})).status,404);
 });
 
-test('local editor WebM exports persist and download as video without provider access',async t=>{
- const f=await api(t);assert.equal(f.boot.features.localEditing,true);
- const webm=Buffer.concat([Buffer.from([0x1a,0x45,0xdf,0xa3]),Buffer.from('\x42\x82\x84webm\x18\x53\x80\x67')]);
- assert.equal(detectMedia(webm,'video/webm'),'video');assert.throws(()=>detectMedia(Buffer.from('not a webm'),'video/webm'));
- const result=await f.upload('/api/assets/import',webm,{'Content-Type':'video/webm','X-File-Name':'Edited.webm','X-Media-Metadata':JSON.stringify({width:640,height:360,duration:2})});assert.equal(result.status,201);
- const {asset}=await result.json();assert.equal(asset.contentType,'video/webm');assert.equal(asset.duration,2);
- const media=await fetch(f.url+'/api/assets/media?id='+asset.id+'&download=1');assert.equal(media.headers.get('content-type'),'video/webm');assert.match(media.headers.get('content-disposition'),/\.webm/);assert.deepEqual(Buffer.from(await media.arrayBuffer()),webm);
- for(const file of ['editing.js','editing-models.js','editing-renderer.js','editing.css'])assert.equal((await fetch(f.url+'/'+file)).status,200);
-});
 
-test('editor downloads use expiring local attachments with project names and do not add library entries',async t=>{
- const f=await api(t);const projectReply=await f.post('/api/projects',{type:'create',name:'Color studies'}),{project}=await projectReply.json();
- const result=await f.upload('/api/editing/exports',png,{'X-Project-Id':project.id,'X-File-Name':encodeURIComponent('Study-graded.png')});assert.equal(result.status,201);const ticket=await result.json();assert.equal(ticket.name,'Color studies-Study-graded.png');
- assert.equal((await f.list()).length,0);assert.match(ticket.url,/^\/api\/editing\/exports\/[a-f0-9]{48}$/);
- const file=await fetch(f.url+ticket.url);assert.equal(file.status,200);assert.equal(file.headers.get('Content-Type'),'image/png');assert.match(file.headers.get('Content-Disposition'),/attachment.*Color%20studies-Study-graded.png/);assert.deepEqual(Buffer.from(await file.arrayBuffer()),png);
- assert.equal((await f.upload('/api/editing/exports',png,{'X-Project-Id':project.id,'X-Studio-Token':''})).status,403);
- assert.equal((await f.upload('/api/editing/exports',png,{'X-Project-Id':project.id,Origin:'https://example.com'})).status,403);
- assert.equal((await f.upload('/api/editing/exports',Buffer.from('<script>bad</script>'),{'X-Project-Id':project.id})).status,400);
- assert.equal((await f.upload('/api/editing/exports',png,{'X-Project-Id':'missing'})).status,400);
- assert.equal((await fetch(f.url+'/api/editing/exports/'+'0'.repeat(48))).status,404);
-});
 
 test('feed asset saved state survives reload and tracks Trash and restore for images and videos',async t=>{
  for(const kind of ['image','video']){

@@ -1,7 +1,7 @@
 import {readFile,stat} from 'node:fs/promises';
 
 // This file is read by the local server only, never served to the browser.
-export async function readSavedApiKey(path,label='CUSTOM/FAL_API_KEY_HERE.txt',provider='fal.ai'){
+export async function readSavedApiKey(path,label='CUSTOM/REFERENCE_MASTER_COMFY_KEY.txt',provider='Comfy'){
   if(!path)return '';
   let text;
   try{

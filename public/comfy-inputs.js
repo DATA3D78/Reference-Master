@@ -10,8 +10,7 @@ export const COMFY_MODELS={
 export const rawBase64=value=>typeof value==='string'?value.replace(/^data:[^,]+,/, ''):value;
 export function comfyModel(model){
  const endpoint=COMFY_MODELS[model.id];
- const referenceEndpoints=model.endpoints||(model.id==='seedance20'?{text:'bytedance/seedance-2.0/text-to-video',image:'bytedance/seedance-2.0/image-to-video',frames:'bytedance/seedance-2.0/image-to-video',video:'bytedance/seedance-2.0/reference-to-video'}:undefined);
- const result={...model,referenceEndpoints,provider:'comfy',available:!!endpoint,inputVersion:3,docs:'https://comfy.org/platform/router/',endpoints:endpoint?Object.fromEntries(model.inputs.map(type=>[type,type==='edit'?'bfl/video-edit-v1':endpoint])):undefined};
+ const result={...model,provider:'comfy',available:!!endpoint,inputVersion:3,docs:'https://comfy.org/platform/router/',endpoints:endpoint?Object.fromEntries(model.inputs.map(type=>[type,type==='edit'?'bfl/video-edit-v1':endpoint])):undefined};
  if(!endpoint){result.description='Not available through this Comfy integration';result.unavailableReason='An exact Comfy Router schema for this model has not been published. Choose another model.';}
  if(model.family==='krea'){result.resolutions=['1K'];result.note='1K output. References guide the visual style.';}
  if(model.id==='wan3'){

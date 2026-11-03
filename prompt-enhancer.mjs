@@ -1,7 +1,7 @@
 import {readFile} from 'node:fs/promises';
 import {join} from 'node:path';
 import {createHash,randomUUID} from 'node:crypto';
-import {keyFingerprint} from './spending-store.mjs';
+import {keyFingerprint} from './key-fingerprint.mjs';
 import {MODELS,capabilities} from './public/models.js';
 import {openRouterTransportError} from './openrouter-errors.mjs';
 

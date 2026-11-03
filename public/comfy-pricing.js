@@ -1,7 +1,7 @@
 export function pricePreview(post,paint){
  let timer,revision=0;
  return {show(value){++revision;clearTimeout(timer);paint(value);},update(body,{enabled=true,reason='Choose generation settings to see an estimate.',fallback}={}){
-  const current=++revision;clearTimeout(timer);paint(fallback||{available:false,statusLabel:enabled?'…':'—',reason:enabled?'Calculating the fal.ai estimate.':reason});
+  const current=++revision;clearTimeout(timer);paint(fallback||{available:false,statusLabel:enabled?'…':'—',reason:enabled?'Calculating the Comfy Router estimate.':reason});
   if(!enabled)return;
   timer=setTimeout(async()=>{try{const estimate=await post('/api/estimate',body);if(current===revision)paint(estimate.available?estimate:fallback||estimate);}catch(error){if(current===revision)paint(fallback||{available:false,statusLabel:'—',reason:error.message});}},650);
  }};

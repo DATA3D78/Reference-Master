@@ -3,7 +3,7 @@ import {OUTFIT_SYSTEM_PROMPT} from './public/outfit-prompt.js';
 import {readFile,writeFile,rename} from 'node:fs/promises';
 import {join} from 'node:path';
 import {randomUUID} from 'node:crypto';
-import {keyFingerprint} from './spending-store.mjs';
+import {keyFingerprint} from './key-fingerprint.mjs';
 import {LLM_MODELS,LLM_LIMITS} from './public/llm-models.js';
 import {openRouterTransportError} from './openrouter-errors.mjs';
 import {descriptionSchema,descriptionInstructions,validDescription} from './llm-description.mjs';

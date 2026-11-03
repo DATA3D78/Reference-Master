@@ -1,9 +1,8 @@
 import {creatorViewRatio,CREATOR_VIEWS,creatorDefinition,creatorPrompt} from './public/creator-model.js';
 import {referenceAudience} from './public/reference-model.js';
 import {isOutfitGeneration,outfitAudience} from './public/outfit-prompt.js';
-import {estimateReferenceCost,referenceBillingEstimate,seedAudioReference} from './public/reference-pricing.js';
+import {estimateReferenceCost,referenceBillingEstimate} from './public/reference-pricing.js';
 import './network-trust.mjs';
-import {createFalRouter,falModelURL,falQueueURLs,normalizeFalOutputs} from './fal-router.mjs';
 import {createComfyRouter,modelURL,queueURLs,normalizeOutputs,billingEstimate,normalizeEstimate} from './comfy-router.mjs';
 import {validMediaURL,fetchPublicMedia} from './public-media-fetch.mjs';
 export {validMediaURL} from './public-media-fetch.mjs';
@@ -11,9 +10,7 @@ import {createRequestAccess,studioRuntime} from './server-access.mjs';
 import {assetDownloadName,projectDownloadName} from './public/library.js';
 import http from 'node:http';
 import {createBatchDownloads} from './batch-download.mjs';
-import {createEditorExports,EDIT_EXPORT_MAX_BYTES} from './editor-export.mjs';
 import {createShootStore} from './shoot-store.mjs';
-import {createEditingPresetStore} from './editing-preset-store.mjs';
 import { readFile, writeFile, mkdir, rename } from 'node:fs/promises';
 import { randomUUID, randomBytes, createHash } from 'node:crypto';
 import { dirname, join } from 'node:path';
@@ -26,24 +23,16 @@ import { createIdeationStore, validateCanvasPosition } from './ideation-store.mj
 import {createProjectStore,DEFAULT_PROJECT} from './project-store.mjs';
 import {readSavedApiKey} from './api-key-file.mjs';
 import {createSettingsFiles,openTextFile} from './settings-files.mjs';
-import {customPaths,removeLegacyCustomLinks,migrateApiKeyFile} from './custom-files.mjs';
+import {customPaths} from './custom-files.mjs';
 import {createLlmStore} from './llm-store.mjs';
 import {LLM_MODELS,LLM_LIMITS} from './public/llm-models.js';
 import {createAssetStore} from './asset-store.mjs';
-import {createSpendingStore,keyFingerprint} from './spending-store.mjs';
 import {createPromptEnhancer} from './prompt-enhancer.mjs';
 import {videoFrameCount} from './video-metadata.mjs';
-import {buildToolInput,estimateToolCost} from './public/tools-models.js';
-import {buildAudioInput,estimateAudioCost,audioContentType} from './public/audio-models.js';
 
 const ROOT = dirname(fileURLToPath(import.meta.url));
-const DEPTH_ASSETS=new Set([
- '/vendor/depth-runtime/transformers.min.js','/vendor/depth-runtime/ort-wasm-simd-threaded.jsep.mjs','/vendor/depth-runtime/ort-wasm-simd-threaded.jsep.wasm',
- '/vendor/depth-runtime/LICENSE.txt','/vendor/depth-runtime/ONNX-LICENSE.txt','/vendor/radiance/LICENSE.txt',
- '/vendor/depth-anything-v2-small/config.json','/vendor/depth-anything-v2-small/preprocessor_config.json','/vendor/depth-anything-v2-small/onnx/model_quantized.onnx','/vendor/depth-anything-v2-small/LICENSE.txt'
-]);
-const CUSTOM_PATHS = customPaths(ROOT);
-const ACTIVE = new Set(['SUBMITTING','IN_QUEUE','IN_PROGRESS']);
+const CUSTOM_PATHS=customPaths(ROOT);
+const ACTIVE=new Set(['SUBMITTING','IN_QUEUE','IN_PROGRESS']);
 const MIME = { '.png':'image/png', '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg':'image/svg+xml' };
 const fail = (message, status = 400) => Object.assign(new Error(message), { status });
 async function readBody(req, max) {
@@ -67,10 +56,9 @@ export function detectMedia(data, claimed) {
   throw fail('Unsupported file. Use PNG, JPEG, WebP, MP4, MOV, WebM, MP3, WAV or Ogg Opus.');
 }
 
-export async function createStudio({ dataDir = join(ROOT,'.local'), fetchImpl = fetch, key = process.env.FAL_KEY || undefined, keyFile = dataDir===join(ROOT,'.local')?CUSTOM_PATHS.keyFile:null, falKey=undefined, falKeyFile=keyFile, comfyKey=process.env.COMFY_API_KEY||undefined, comfyKeyFile=dataDir===join(ROOT,'.local')?join(ROOT,'CUSTOM/REFERENCE_MASTER_COMFY_KEY.txt'):null, openRouterKey=process.env.OPENROUTER_API_KEY||undefined, openRouterKeyFile=dataDir===join(ROOT,'.local')?CUSTOM_PATHS.openRouterKeyFile:null, pollMs = 4000, autoArchive = true, promptPresetDir = CUSTOM_PATHS.promptPresetDir, access, instanceId, openSettingsFile=openTextFile, pickMediaFolder=nativeMediaFolderPicker(join(ROOT,'launcher/select-media-folder')) } = {}) {
-  const authorizeRequest=createRequestAccess(access),comfy=createComfyRouter(fetchImpl),fal=createFalRouter(fetchImpl);
-  await Promise.all([migrateApiKeyFile(keyFile),migrateApiKeyFile(falKeyFile),migrateApiKeyFile(openRouterKeyFile)]);
-  const settingsFiles=createSettingsFiles({keyFile,falKeyFile,comfyKeyFile,openRouterKeyFile,promptPresetDir,hosted:!!access?.publicOrigin,openFile:openSettingsFile});
+export async function createStudio({ dataDir = join(ROOT,'.local'), fetchImpl = fetch, comfyKey=process.env.COMFY_API_KEY||undefined, comfyKeyFile=dataDir===join(ROOT,'.local')?join(ROOT,'CUSTOM/REFERENCE_MASTER_COMFY_KEY.txt'):null, pollMs = 4000, autoArchive = true, promptPresetDir = CUSTOM_PATHS.promptPresetDir, access, instanceId, openSettingsFile=openTextFile, pickMediaFolder=nativeMediaFolderPicker(join(ROOT,'launcher/select-media-folder')) } = {}) {
+  const authorizeRequest=createRequestAccess(access),comfy=createComfyRouter(fetchImpl);
+  const settingsFiles=createSettingsFiles({comfyKeyFile,hosted:!!access?.publicOrigin,openFile:openSettingsFile});
   await mkdir(dataDir, { recursive: true, mode: 0o700 });
   let jobs = [];
   try { jobs = JSON.parse(await readFile(join(dataDir,'jobs.json'),'utf8')); } catch(e) { if (e.code !== 'ENOENT') throw new Error('Cannot read saved history. Preserve .local/jobs.json and repair it before restarting.'); }
@@ -83,23 +71,15 @@ export async function createStudio({ dataDir = join(ROOT,'.local'), fetchImpl = 
   let migrated=false;
   for(const job of jobs){if(!job.provider){job.provider='fal';migrated=true;}if(!job.projectId){job.projectId=DEFAULT_PROJECT;migrated=true;}projects.requireProject(job.projectId,{includeDeleted:true});}
   for(const job of jobs)for(const task of job.tasks)for(const media of task.outputs||[])if(!media.id){media.id=randomUUID();migrated=true;}
-  for (const job of jobs) for (const task of job.tasks) if (task.status === 'SUBMITTING'||job.provider!=='comfy'&&job.managedBy!=='v2'&&ACTIVE.has(task.status)) { task.status = 'UNKNOWN'; task.error = job.provider==='comfy'||job.managedBy==='v2'?'The app restarted during submission. Check provider activity before retrying.':'This request belongs to the original fal.ai studio. Open the original app to check it.';migrated=true; }
-  let sessionKey=falKey??key,apiKey=sessionKey??await readSavedApiKey(falKeyFile||keyFile); const csrf = randomBytes(24).toString('hex');
-  async function reloadSavedKey(){if(sessionKey===undefined)apiKey=await readSavedApiKey(falKeyFile||keyFile);}
-  // Reference Master uses Comfy for new image/video generations; retain fal for legacy jobs and tools.
+  for (const job of jobs) for (const task of job.tasks) if (task.status === 'SUBMITTING'||job.provider!=='comfy'&&job.managedBy!=='v2'&&ACTIVE.has(task.status)) { task.status = 'UNKNOWN'; task.error = job.provider==='comfy'||job.managedBy==='v2'?'The app restarted during submission. Check provider activity before retrying.':'This request belongs to the original studio. Open the original app to check it.';migrated=true; }
+  const csrf=randomBytes(24).toString('hex');
   let legacyComfyKey=comfyKey??await readSavedApiKey(comfyKeyFile,'CUSTOM/REFERENCE_MASTER_COMFY_KEY.txt','Comfy');
   async function reloadComfyKey(){if(comfyKey===undefined)legacyComfyKey=await readSavedApiKey(comfyKeyFile,'CUSTOM/REFERENCE_MASTER_COMFY_KEY.txt','Comfy');}
   async function credentialFor(provider){if(provider!=='comfy')throw fail('This legacy model is not available through Comfy Router.',409);await reloadComfyKey();if(!legacyComfyKey)throw fail('Add your Comfy API key in Settings.',401);return legacyComfyKey;}
-  const storedEstimate=value=>value?.available?{amount:value.amount,extraUsage:true,checkedAt:value.checkedAt}:null;
-  let routerSessionKey=openRouterKey,routerKey=openRouterKey??await readSavedApiKey(openRouterKeyFile,'CUSTOM/OPENROUTER_API_KEY_HERE.txt','OpenRouter');
-  async function reloadRouterKey(){if(routerSessionKey===undefined)routerKey=await readSavedApiKey(openRouterKeyFile,'CUSTOM/OPENROUTER_API_KEY_HERE.txt','OpenRouter');}
   const llm=await createLlmStore({directory:dataDir,fetchImpl,requireProject:projects.requireProject,validateSavedProject:id=>projects.requireProject(id,{includeDeleted:true})});
-  const spending=await createSpendingStore({directory:dataDir,fetchImpl});
-  const enhancer=createPromptEnhancer({directory:promptPresetDir,fetchImpl,trackSpending:spending.trackEnhancement});
+  const enhancer=createPromptEnhancer({directory:promptPresetDir,fetchImpl});
   const assets=await createAssetStore({directory:join(dataDir,'assets'),validateMedia:detectMedia,projectName});
-  const editingPresets=await createEditingPresetStore(dataDir);
   const shoot=await createShootStore(dataDir,projects.requireProject);
-  const editorExports=await createEditorExports({directory:join(dataDir,'editing-exports'),validateMedia:detectMedia});
   const uploads = new Map(); let uploadBytes = 0; let saving = Promise.resolve(); const refreshing = new Set();
   const save = () => {
     const snapshot = JSON.stringify(jobs,null,2);
@@ -153,7 +133,7 @@ export async function createStudio({ dataDir = join(ROOT,'.local'), fetchImpl = 
     const file=await archiveOne(job,media,{force:true});
     return {...file,projectId:job.projectId,projectName:project.name,name:projectDownloadName(project.name,String(job.modelName||job.mode).slice(0,60)+'-'+String(job.createdAt).slice(0,10),file.path.split('.').pop())};
   }});
-  const cleanError = (e,credential=apiKey) => [credential,apiKey,legacyComfyKey,routerKey].filter(Boolean).reduce((message,key)=>message.split(key).join('[redacted]'),String(e.message || 'Request failed.')).replace(/data:[^\s]+/g,'[file data]').slice(0,700);
+  const cleanError = (e,credential=legacyComfyKey) => [credential,legacyComfyKey].filter(Boolean).reduce((message,key)=>message.split(key).join('[redacted]'),String(e.message || 'Request failed.')).replace(/data:[^\s]+/g,'[file data]').slice(0,700);
   const boards=new Map();
   const boardFor=async(projectId)=>{
     projectId=projects.requireProject(projectId).id;
@@ -208,24 +188,24 @@ export async function createStudio({ dataDir = join(ROOT,'.local'), fetchImpl = 
   async function run(job, config, credential) {
     for (const task of job.tasks) {
       try {
-        const isFal=job.provider==='fal',client=isFal?fal:comfy;
-        const {data:r,retryAfter}=await client.request(isFal?falModelURL(config.endpoint):modelURL(config.endpoint)+'/requests',{method:'POST',credential,input:config.input,idempotencyKey:task.idempotencyKey});
+        const client=comfy;
+        const {data:r,retryAfter}=await client.request(modelURL(config.endpoint)+'/requests',{method:'POST',credential,input:config.input,idempotencyKey:task.idempotencyKey});
         if(typeof r.request_id==='string')task.requestId=r.request_id;
-        const urls=isFal?falQueueURLs(config.endpoint,r.request_id):queueURLs(config.endpoint,r.request_id);
-        Object.assign(task,{status:r.error_type?'FAILED':'IN_QUEUE',...urls,modelId:config.endpoint,queuePosition:r.queue_position,nextPollAt:Date.now()+retryAfter,costEstimate:isFal?job.costEstimate:billingEstimate(r.estimate)||job.costEstimate});
-        if(r.error_type)task.error=(isFal?'fal.ai':'Comfy')+' could not complete this request: '+String(r.error_type).replaceAll('_',' ');
+        const urls=queueURLs(config.endpoint,r.request_id);
+        Object.assign(task,{status:r.error_type?'FAILED':'IN_QUEUE',...urls,modelId:config.endpoint,queuePosition:r.queue_position,nextPollAt:Date.now()+retryAfter,costEstimate:billingEstimate(r.estimate)||job.costEstimate});
+        if(r.error_type)task.error='Comfy'+' could not complete this request: '+String(r.error_type).replaceAll('_',' ');
       } catch(e) { task.status=e.status>=500||e.status===409?'UNKNOWN':'FAILED';task.error=cleanError(e,credential); }
       try { await save(); } catch { task.notice='History could not be saved. Keep this app open and copy the provider request ID.'; }
     }
   }
   async function refresh() {
     for (const [id,u] of uploads) if (Date.now()-u.createdAt>3600000) {uploadBytes-=u.bytes;uploads.delete(id);}
-    const tasks=jobs.filter(j=>j.provider==='comfy'?!!legacyComfyKey:j.provider==='fal'&&j.managedBy==='v2'&&!!apiKey).flatMap(job=>job.tasks.map(task=>({job,task}))).filter(({task:t})=>['IN_QUEUE','IN_PROGRESS'].includes(t.status)&&!refreshing.has(t)&&(t.nextPollAt||0)<=Date.now());
+    const tasks=jobs.filter(j=>j.provider==='comfy'&&!!legacyComfyKey).flatMap(job=>job.tasks.map(task=>({job,task}))).filter(({task:t})=>['IN_QUEUE','IN_PROGRESS'].includes(t.status)&&!refreshing.has(t)&&(t.nextPollAt||0)<=Date.now());
     await Promise.all(tasks.map(async ({job,task})=>{
-      const isFal=job.provider==='fal',client=isFal?fal:comfy,credential=isFal?apiKey:legacyComfyKey,providerName=isFal?'fal.ai':'Comfy';
+      const client=comfy,credential=legacyComfyKey,providerName='Comfy';
       refreshing.add(task);
       try {
-        const urls=isFal?falQueueURLs(task.modelId,task.requestId):queueURLs(task.modelId,task.requestId);
+        const urls=queueURLs(task.modelId,task.requestId);
         const status=await client.request(urls.statusURL,{credential}),s=status.data;
         task.nextPollAt=Date.now()+status.retryAfter;task.notice=undefined;
         if(s.error_type||s.error){task.status='FAILED';task.error=cleanError({message:providerName+' could not complete this request: '+String(s.error_type||s.error).replaceAll('_',' ')},credential);}
@@ -233,7 +213,7 @@ export async function createStudio({ dataDir = join(ROOT,'.local'), fetchImpl = 
           const receipt=await client.request(urls.resultURL,{credential});
           task.nextPollAt=Date.now()+receipt.retryAfter;
           if(receipt.status===202)return;
-          const outputs=(isFal?normalizeFalOutputs:normalizeOutputs)(task.modelId,receipt.data,job.settings),saved=[];
+          const outputs=normalizeOutputs(task.modelId,receipt.data,job.settings),saved=[];
           for(const output of outputs){
             const {data,...details}=output,media={id:randomUUID(),...details};
             if(data){const file=await mediaStore.saveBytes(job.id,media,data);media.local={bytes:file.bytes,savedAt:file.savedAt};}
@@ -241,8 +221,6 @@ export async function createStudio({ dataDir = join(ROOT,'.local'), fetchImpl = 
             saved.push(media);
           }
           task.outputs=saved;task.status='COMPLETED';
-          if(isFal&&job.mode==='audio')task.costEstimate=storedEstimate(estimateAudioCost(job.settings.model,job.settings.options,receipt.data.duration))||task.costEstimate;
-          if(!isFal&&job.settings.model==='seed-audio'&&!task.costEstimate){const estimate=seedAudioReference(receipt.data.duration);if(estimate.available)task.costEstimate={amount:estimate.minimum,maximum:estimate.maximum,source:estimate.source,referenceProvider:estimate.referenceProvider,checkedAt:estimate.checkedAt,url:estimate.url};}
           if(Number.isFinite(receipt.actualCost))task.actualCost=receipt.actualCost;
         }else if(['IN_QUEUE','IN_PROGRESS'].includes(s.status)){task.status=s.status;task.queuePosition=s.queue_position;}
         else throw fail(providerName+' returned an unrecognized queue status.',502);
@@ -255,16 +233,8 @@ export async function createStudio({ dataDir = join(ROOT,'.local'), fetchImpl = 
     await syncBoards();if(autoArchive)await archive();
   }
   async function quote(body){
-    if(body.kind==='tool'){
-      const source=uploads.get(body.referenceId),config=buildToolInput(body,source),value=estimateToolCost(config.tool.id,config.options,source.metadata);
-      return {available:value.available,minimum:value.amount,maximum:value.amount,approximate:true,currency:'USD',checkedAt:value.checkedAt,reason:value.note};
-    }
     if(!Array.isArray(body.referenceIds)||body.referenceIds.length>50||new Set(body.referenceIds).size!==body.referenceIds.length)throw fail('Invalid reference list.');
     const refs=body.referenceIds.map(id=>uploads.get(id));if(refs.some(ref=>!ref))throw fail('Add the expired reference again.');
-    if(body.kind==='audio'){
-      const config=buildAudioInput(body,refs),value=estimateAudioCost(config.model.id,config.options);
-      return {available:value.available,minimum:value.amount,maximum:value.amount,approximate:true,currency:'USD',checkedAt:value.checkedAt,reason:value.note};
-    }
     await reloadComfyKey();if(!legacyComfyKey)return {available:false,reason:'Add your Comfy API key in Settings.'};
     const config=buildInput(body,refs);const {data}=await comfy.request(modelURL(config.endpoint)+'/estimate',{method:'POST',credential:legacyComfyKey,input:config.input});return normalizeEstimate(data,body.count||1);
   }
@@ -278,7 +248,7 @@ export async function createStudio({ dataDir = join(ROOT,'.local'), fetchImpl = 
       authorizeRequest(req,port);
       const url = new URL(req.url,`http://${req.headers.host}`);
       if (req.method !== 'GET' && req.headers['x-studio-token'] !== csrf) throw fail('Reload the app and try again.',403);
-      if (url.pathname === '/api/bootstrap' && req.method === 'GET') {await reloadSavedKey();await reloadComfyKey();return send(200,{ csrf, instanceId, mediaStorage:mediaPreferences.snapshot(), keyConfigured:!!legacyComfyKey,comfyKeyConfigured:!!legacyComfyKey,falKeyConfigured:!!apiKey, models:MODELS,provider:'comfy',studioVersion:2,features:{shoot:true,shootRefinement:true,shootReferenceAnalysis:true,shootConciseSubject:true,shootSubjectTypes:true,shootProductRefinement:true,falGeneration:true,comfyRouter:true,hybridProviders:false,referencePricing:true,settingsFiles:true,effectStack:true,expandedEffects:true,radianceGrading:true,h264EditingExport:true,editingPresets:true,localEditing:true,customFolder:true,pricingReview:true,canvasAssets:true,assetRemoval:true,projectDownloadNames:true,detailedLlmStructure:true,llmConnectionFix:true,seedvrVideo:true,llmDeletion:true,batchDownloads:true,ideation:true,projects:true,canvasGroups:true,savedApiKey:true,llm:true,concurrentGenerations:true,promptEnhancer:true,assetLibrary:true,videoAssets:true,spending:true,generationDeletion:true,failedGenerationDeletion:true,mediaTools:true,audioGeneration:true,projectDeletion:true},projects:projectSummaries(),deletedProjects:projects.list({deleted:true}) });}
+      if (url.pathname === '/api/bootstrap' && req.method === 'GET') {await reloadComfyKey();return send(200,{ csrf, instanceId, mediaStorage:mediaPreferences.snapshot(), keyConfigured:!!legacyComfyKey,comfyKeyConfigured:!!legacyComfyKey, models:MODELS,provider:'comfy',studioVersion:2,features:{shoot:true,shootRefinement:true,shootReferenceAnalysis:true,shootConciseSubject:true,shootSubjectTypes:true,shootProductRefinement:true,comfyRouter:true,hybridProviders:false,referencePricing:true,settingsFiles:true,effectStack:false,expandedEffects:false,radianceGrading:false,h264EditingExport:false,editingPresets:false,localEditing:false,customFolder:true,pricingReview:true,canvasAssets:true,assetRemoval:true,projectDownloadNames:true,detailedLlmStructure:true,llmConnectionFix:true,seedvrVideo:false,llmDeletion:true,batchDownloads:true,ideation:true,projects:true,canvasGroups:true,savedApiKey:true,llm:true,concurrentGenerations:true,promptEnhancer:true,assetLibrary:true,videoAssets:true,spending:false,generationDeletion:true,failedGenerationDeletion:true,mediaTools:false,audioGeneration:false,projectDeletion:true},projects:projectSummaries(),deletedProjects:projects.list({deleted:true}) });}
       if(url.pathname==='/api/estimate'&&req.method==='POST'){try{return send(200,await quote(await jsonBody(req,512*1024)));}catch(e){return send(200,{available:false,statusLabel:'—',reason:cleanError(e)});}}
       if(url.pathname==='/api/shoot'&&req.method==='GET')return send(200,shoot.load(url.searchParams.get('project')||undefined));
       if(url.pathname==='/api/shoot'&&req.method==='POST')return send(200,await shoot.save(await jsonBody(req,768*1024)));
@@ -287,25 +257,8 @@ export async function createStudio({ dataDir = join(ROOT,'.local'), fetchImpl = 
       if(url.pathname==='/api/settings/media/folder'&&req.method==='POST'){const body=await jsonBody(req,2048);if(body.draft===true)return send(200,await mediaPreferences.choose('default',{draft:true}));const project=projects.requireProject(body.projectId);return send(200,await mediaPreferences.choose(project.id));}
       if(url.pathname==='/api/settings/files'&&req.method==='GET')return send(200,settingsFiles.list());
       if(url.pathname==='/api/settings/files/open'&&req.method==='POST'){const body=await jsonBody(req,2048);return send(200,await settingsFiles.open(body.id));}
-      if(url.pathname==='/api/editing/presets'&&req.method==='GET')return send(200,{presets:editingPresets.list()});
-      if(url.pathname==='/api/editing/presets'&&req.method==='POST')return send(200,await editingPresets.mutate(await jsonBody(req,160*1024)));
-      if(url.pathname==='/api/editing/exports'&&req.method==='POST'){
-        const contentType=String(req.headers['content-type']||'').split(';')[0],project=projects.requireProject(req.headers['x-project-id'],{includeDeleted:true});
-        let stem;try{stem=decodeURIComponent(req.headers['x-file-name']||'Edited copy');}catch{throw fail('Invalid export name.');}
-        const extension=({'image/png':'png','image/jpeg':'jpg','video/mp4':'mp4'})[contentType];if(!extension)throw fail('Unsupported editor export format.',415);
-        const data=await readBody(req,EDIT_EXPORT_MAX_BYTES);
-        return send(201,await editorExports.prepare({data,contentType,name:projectDownloadName(project.name,stem.replace(/\.[^.]+$/,''),extension)}));
-      }
-      if(/^\/api\/editing\/exports\/[a-f0-9]{48}$/.test(url.pathname)&&req.method==='GET'){await editorExports.serve(res,url.pathname.split('/').pop());return;}
       if(url.pathname==='/api/downloads/batch'&&req.method==='POST')return send(201,await batchDownloads.prepare(await jsonBody(req)));
       if(/^\/api\/downloads\/batch\/[a-f0-9]{48}$/.test(url.pathname)&&req.method==='GET'){await batchDownloads.serve(res,url.pathname.split('/').pop());return;}
-      if(url.pathname==='/api/spending/year'&&req.method==='GET')return send(200,spending.yearSummary(jobs,llm.spendingEntries(),Number(url.searchParams.get('year')||new Date().getFullYear())));
-      if(url.pathname==='/api/spending'&&req.method==='GET')return send(200,spending.summary(jobs,llm.spendingEntries(),url.searchParams.get('period')||'day'));
-      if(url.pathname==='/api/spending/sync'&&req.method==='POST'){
-        const body=await jsonBody(req);await reloadSavedKey();await reloadRouterKey();
-        await spending.sync(jobs,llm.spendingEntries(),body.period||'day',{fal:apiKey,comfy:legacyComfyKey,openrouter:routerKey});
-        return send(200,spending.summary(jobs,llm.spendingEntries(),body.period||'day'));
-      }
       if(url.pathname==='/api/assets'&&req.method==='GET'){
         const project=url.searchParams.get('project');if(project)projects.requireProject(project,{includeDeleted:true});return send(200,{assets:assets.list(project,{deleted:url.searchParams.get('deleted')==='1'}).map(asset=>({...asset,referenceType:asset.sources.map(source=>jobs.find(job=>job.id===source.jobId)?.settings?.referenceType||source.referenceType).find(type=>['character','product','environment'].includes(type))||'character',referenceAudience:asset.sources.map(source=>referenceAudience(jobs.find(job=>job.id===source.jobId))!=='neutral'?referenceAudience(jobs.find(job=>job.id===source.jobId)):source.referenceAudience).find(value=>['women','men'].includes(value))||'neutral',outfitAudience:asset.sources.map(source=>jobs.find(job=>job.id===source.jobId)?.settings?.outfitAudience||source.outfitAudience||outfitAudience(jobs.find(job=>job.id===source.jobId))).find(value=>['women','men'].includes(value))||'neutral',characterAudience:asset.sources.map(source=>({Female:'women',Male:'men'}[jobs.find(job=>job.id===source.jobId)?.settings?.creator?.gender]||source.characterAudience)).find(value=>['women','men'].includes(value))||'neutral',category:asset.sources.some(source=>source.category==='character'||jobs.find(job=>job.id===source.jobId)?.settings?.workflow==='creator')?'character':asset.sources.some(source=>source.category==='id'||jobs.find(job=>job.id===source.jobId)?.settings?.workflow==='reference')?'id':asset.sources.some(source=>source.category==='outfit'||source.type==='generated'&&isOutfitGeneration(jobs.find(job=>job.id===source.jobId)))?'outfit':'general'}))});
       }
@@ -409,32 +362,6 @@ export async function createStudio({ dataDir = join(ROOT,'.local'), fetchImpl = 
         try{await save();}catch{if(media.favorite===body.favorite)media.favorite=previous;throw fail('Could not save your favorite. Check available storage and try again.',500);}
         return send(200,{mediaId:media.id,favorite:media.favorite});
       }
-      if(url.pathname==='/api/audio/generate'&&req.method==='POST'){
-        const body=await jsonBody(req,256*1024),project=projects.requireProject(body.projectId);
-        if(!Array.isArray(body.referenceIds)||body.referenceIds.length>3||new Set(body.referenceIds).size!==body.referenceIds.length)throw fail('Invalid audio reference list.');
-        const refs=body.referenceIds.map(id=>uploads.get(id));if(refs.some(ref=>!ref))throw fail('A reference expired. Add it again before generating.');
-        let config;try{config=buildAudioInput(body,refs);}catch(error){throw fail(error.message);}
-        const {model,options,inputType}=config,credential=await credentialFor(model.provider);
-        const job={id:randomUUID(),provider:model.provider,managedBy:'v2',projectId:project.id,createdAt:new Date().toISOString(),modelName:model.name,mode:'audio',
-          settings:{model:model.id,prompt:body.prompt.trim(),...(model.id==='music-3'?{lyrics:config.input.lyrics}:{}),options,inputType,count:1,referenceCount:refs.length},
-          billingKeyHash:keyFingerprint(credential),costEstimate:storedEstimate(estimateAudioCost(model.id,options)),tasks:[{status:'SUBMITTING',idempotencyKey:randomUUID(),modelId:config.endpoint,outputs:[]}]};
-        projects.requireProject(project.id);jobs.unshift(job);
-        try{await save();}catch{jobs=jobs.filter(j=>j!==job);throw fail('Cannot save this request to disk. Check available storage.',500);}
-        run(job,config,credential).catch(()=>{});return send(202,{job:publicJob(job)});
-      }
-      if(url.pathname==='/api/tools/generate'&&req.method==='POST'){
-        const body=await jsonBody(req),project=projects.requireProject(body.projectId);
-        const ref=uploads.get(body.referenceId);if(!ref)throw fail('The source file expired. Add it again before running the tool.');
-        let config;try{config=buildToolInput(body,ref);}catch(e){throw fail(e.message);}
-        const {tool,options}=config,name=typeof body.sourceName==='string'?body.sourceName.trim().slice(0,180):'Source '+tool.kind;
-        const credential=await credentialFor(tool.provider);
-        const job={id:randomUUID(),provider:tool.provider,managedBy:'v2',projectId:project.id,createdAt:new Date().toISOString(),modelName:tool.modelName,mode:tool.kind,
-          settings:{tool:tool.id,model:tool.id,options,inputType:tool.kind,prompt:tool.name+' · '+name,sourceName:name,sourceMetadata:ref.metadata,ratio:'Original',resolution:options.upscale_mode==='target'?options.target_resolution:options.upscale_factor?options.upscale_factor+'×':options.resolution||'Original',duration:tool.kind==='video'?String(Number(ref.metadata.duration.toFixed(2))):undefined,count:1},
-          billingKeyHash:keyFingerprint(credential),costEstimate:storedEstimate(estimateToolCost(tool.id,options,ref.metadata)),tasks:[{status:'SUBMITTING',idempotencyKey:randomUUID(),modelId:config.endpoint,outputs:[]}]};
-        projects.requireProject(project.id);jobs.unshift(job);
-        try{await save();}catch{jobs=jobs.filter(j=>j!==job);throw fail('Cannot save this request to disk. Check available storage.',500);}
-        run(job,config,credential).catch(()=>{});return send(202,{job:publicJob(job)});
-      }
       if (url.pathname === '/api/generate' && req.method === 'POST') {
         await reloadComfyKey();
         if (!legacyComfyKey) throw fail('Add your Comfy API key in Settings first.',401);
@@ -457,7 +384,7 @@ export async function createStudio({ dataDir = join(ROOT,'.local'), fetchImpl = 
         const job={id:randomUUID(),provider:'comfy',managedBy:'v2',projectId:project.id,createdAt:new Date().toISOString(),modelName:config.model.name,mode:config.model.mode,
           settings:{ ...(body.workflow==='creator'?{workflow:'creator',creator:body.creator,creatorView:body.creatorView,creatorOutfit:body.creatorOutfit===true}:{}),...(body.workflow==='reference'?{workflow:'reference',referenceType:['product','environment'].includes(body.referenceType)?body.referenceType:'character',referenceAudience:referenceAudience({settings:{prompt:body.prompt}})}:{}),...(body.workflow==='outfit'?{workflow:'outfit',outfitAudience:['women','men','neutral'].includes(body.outfitAudience)?body.outfitAudience:outfitAudience({settings:{prompt:body.prompt}})}:{}),...(body.shootBatchId?{shootBatchId:body.shootBatchId}:{}),model:body.model,inputType:body.inputType,prompt:body.prompt.trim(),ratio:body.ratio,resolution:body.resolution,count:body.count,duration:body.duration,audio:!!body.audio,quality:config.model.qualities?(body.quality||'high'):undefined,...(config.model.creativityLevels?{creativity:body.creativity||'medium'}:{}),...(config.model.thinkingLevels?{thinking:body.thinking||'medium'}:{}),frameIndices:body.inputType==='keyframes'?body.frameIndices:undefined },
           tasks:Array.from({length:body.count},()=>({status:'SUBMITTING',idempotencyKey:randomUUID(),modelId:config.endpoint,outputs:[]}))};
-        job.billingKeyHash=keyFingerprint(credential);job.costEstimate=referenceBillingEstimate(body,refs);
+        job.costEstimate=referenceBillingEstimate(body,refs);
         job.settings.references=[];
         for(const ref of refs){
           const record={assetId:ref.assetId,name:ref.name||'Reference',kind:ref.kind,contentType:ref.contentType,metadata:ref.metadata};
@@ -503,18 +430,14 @@ export async function createStudio({ dataDir = join(ROOT,'.local'), fetchImpl = 
         if(!file)throw fail('The local copy is still unavailable. Retry saving this result.',502);
         await mediaStore.serve(req,res,url,job,media,file,{reference:url.searchParams.get('reference')==='1',referenceMB:referenceModel?referenceFileMB(referenceModel,media.contentType.startsWith('video/')?'video':'image'):undefined});return;
       }
-      if(req.method==='GET'&&DEPTH_ASSETS.has(url.pathname)){
-        const file=await readFile(join(ROOT,'public',url.pathname));const ext=url.pathname.slice(url.pathname.lastIndexOf('.'));
-        res.writeHead(200,{'Content-Type':({'.js':'text/javascript','.mjs':'text/javascript','.wasm':'application/wasm','.json':'application/json','.txt':'text/plain','.onnx':'application/octet-stream'})[ext],'Cache-Control':'public, max-age=86400','Content-Length':file.length});res.end(file);return;
-      }
-      if (req.method === 'GET' && ['/','/index.html','/app.js','/comfy-inputs.js','/comfy-pricing.js','/pricing-preview.js','/reference-pricing.js','/models.js','/style.css','/favicon.svg','/ideation.js','/canvas-library.js','/editing.js','/editing-presets.js','/editing-models.js','/editing-renderer.js','/radiance-grade.js','/editing-depth.js','/editing-depth-worker.js','/editing-video.js','/editing-mp4.js','/editing-mp4-worker.js','/vendor/mediabunny/mediabunny.min.js','/editing.css','/ideation.css','/canvas-state.js','/creator.js','/creator-model.js','/reference.js','/reference-model.js','/character-template.png','/product-template.png','/outfit.js','/outfit-prompt.js','/shoot.js','/shoot.css','/shoot-model.js','/llm.js','/llm.css','/llm-models.js','/prompt-enhancer.js','/assets.js','/assets.css','/spending.js','/tools.js','/tools-models.js','/tools.css','/audio.js','/audio-models.js','/audio.css','/library.js'].includes(url.pathname)) {
+      if (req.method === 'GET' && ['/','/index.html','/app.js','/comfy-inputs.js','/comfy-pricing.js','/pricing-preview.js','/reference-pricing.js','/models.js','/style.css','/favicon.svg','/ideation.js','/canvas-library.js','/ideation.css','/canvas-state.js','/creator.js','/creator-model.js','/reference.js','/reference-model.js','/character-template.png','/product-template.png','/outfit.js','/outfit-prompt.js','/shoot.js','/shoot.css','/shoot-model.js','/llm.js','/llm.css','/llm-models.js','/prompt-enhancer.js','/assets.js','/assets.css','/library.js'].includes(url.pathname)) {
         const file=url.pathname==='/'?'/index.html':url.pathname; const ext=file.slice(file.lastIndexOf('.'));
         res.writeHead(200,{'Content-Type':MIME[ext],'Cache-Control':'no-cache'}); res.end(await readFile(join(ROOT,'public',file))); return;
       }
       send(404,{error:'Not found.'});
     } catch(e) { if (!res.headersSent) send(e.status || 500,{error:e.status?cleanError(e):'The local server encountered an error. Please try again.'}); else res.destroy(); }
   });
-  server.on('close',()=>{clearInterval(timer);void editorExports.close().catch(()=>{});});
+  server.on('close',()=>{clearInterval(timer);});
   const ready=autoArchive?archive():Promise.resolve();
   return {server,refresh,save,archive,ready};
 }
@@ -525,5 +448,5 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const {port,host}=runtime;
   const openBrowser=()=>{ if(!runtime.publicOrigin&&process.env.FRAME_OPEN_BROWSER==='1' && process.platform==='darwin') execFile('/usr/bin/open',[`http://127.0.0.1:${port}`],()=>{}); };
   server.on('error',e=>{ console.error(e.code==='EADDRINUSE'?`Port ${port} is in use. Frame may already be open at http://127.0.0.1:${port}`:e.message); if(e.code==='EADDRINUSE')openBrowser(); process.exitCode=1; });
-  server.listen(port,host,()=>{console.log(`Frame Studio is ready → ${runtime.publicOrigin||'http://127.0.0.1:'+port}`);if(!runtime.publicOrigin&&port===4322)void removeLegacyCustomLinks(ROOT).catch(()=>console.warn('CUSTOM is active; temporary links in the app folder could not be removed.'));openBrowser();});
+  server.listen(port,host,()=>{console.log(`Frame Studio is ready → ${runtime.publicOrigin||'http://127.0.0.1:'+port}`);openBrowser();});
 }

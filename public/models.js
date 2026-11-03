@@ -2,19 +2,18 @@ import {comfyModel,nativeInput} from './comfy-inputs.js';
 const imageRatios = ['1:1','16:9','9:16','4:3','3:4','3:2','2:3','4:5','5:4','21:9'];
 const videoRatios = ['16:9','9:16','1:1','4:3','3:4'];
 const seconds = (min,max) => Array.from({length:max-min+1},(_,i)=>String(min+i));
-const docs = endpoint => `https://fal.ai/models/${endpoint}/api`;
 
 // Video input paths, counts and rules checked against fal's schemas on 2026-10-02.
 export const MODELS = [
   { id:'nano-pro', name:'Nano Banana Pro', maker:'Google', mode:'image', mark:'N',
     family:'nano', description:'Image generation & reference editing', inputs:['text','image'],
     ratios:imageRatios, resolutions:['1K','2K','4K'], maxImages:8, maxVideos:0, minPrompt:3,
-    endpoints:{text:'fal-ai/nano-banana-pro',image:'fal-ai/nano-banana-pro/edit'} },
+    endpoints:{} },
   { id:'nano21', name:'Nano Banana 2.1', maker:'Google', mode:'image', mark:'N',
     family:'nano', description:'New image generation & reference editing', inputs:['text','image'],
     ratios:[...imageRatios,'4:1','1:4','8:1','1:8','auto'], resolutions:['1K','2K','4K'], maxImages:14,maxVideos:0,minPrompt:3,maxPrompt:50000,
     thinkingLevels:['minimal','medium','high'],pricingChecked:'2026-10-09',
-    endpoints:{text:'google/nano-banana-2.1',image:'google/nano-banana-2.1/edit'} },
+    endpoints:{} },
   ...[['large','Large',.06,.065],['medium','Medium',.03,.035],['medium/turbo','Medium Turbo',.015,.0175]].map(([variant,label,textPrice,referencePrice])=>({
     id:'krea2-'+variant.replace('/','-'),name:'Krea 2 '+label,maker:'Krea',mode:'image',mark:'K',family:'krea',
     description:variant==='medium/turbo'?'Fast image generation & style references':'Image generation & style references',inputs:['text','image'],
@@ -35,17 +34,17 @@ export const MODELS = [
     family:'seedream', description:'Fast image creation & reference editing', inputs:['text','image'],
     ratios:imageRatios, resolutions:['2K','3K','4K'], maxImages:8, maxVideos:0,
     sizeLimits:{minArea:3686400,maxArea:16777216,maxEdge:14142,step:16},
-    endpoints:{text:'fal-ai/bytedance/seedream/v5/lite/text-to-image',image:'fal-ai/bytedance/seedream/v5/lite/edit'} },
+    endpoints:{} },
   { id:'seedream5-pro', name:'Seedream 5.0 Pro', maker:'ByteDance', mode:'image', mark:'S',
     family:'seedream', description:'Image creation & precise reference editing', inputs:['text','image'],
     ratios:imageRatios, resolutions:['1K','2K'], maxImages:8, maxVideos:0,
     sizeLimits:{minArea:1048576,maxArea:4194304,maxEdge:14142,step:16},
-    endpoints:{text:'bytedance/seedream/v5/pro/text-to-image',image:'bytedance/seedream/v5/pro/edit'} },
+    endpoints:{} },
   { id:'flux3-image', name:'FLUX 3.0', maker:'Black Forest Labs', mode:'image', mark:'F',
     family:'flux-image', description:'Image generation & multi-image editing', inputs:['text','image'],
     ratios:[...imageRatios,'2:1','1:2','7:5','5:7'], resolutions:['1K','2K','4K'], maxImages:8, maxVideos:0,
     imageRules:{minDimension:256,maxArea:4000000},
-    endpoints:{text:'blackforestlabs/flux-3/text-to-image',image:'blackforestlabs/flux-3/edit-image'},
+    endpoints:{},
     imageNote:'References must be at least 256 pixels per side and at most 4 megapixels. 4K generation can take several minutes.' },
   { id:'wan3', name:'Wan 3.0', maker:'Alibaba', mode:'video', mark:'W',
     maxPrompt:20000,family:'wan', description:'Frames, images, video & audio references', inputs:['text','image','frames','video'],
@@ -54,7 +53,7 @@ export const MODELS = [
     referenceLimits:{image:10,video:5,audio:5,total:20},referencePrefix:'reference_',referenceSyntax:'plain',videoAction:'Use image, video & audio references',
     audioRules:{maxDuration:15,maxTotalDuration:15},audioNote:'Audio clips may total up to 15 seconds.',
     videoNote:'Up to 5 clips, totaling at most 15 seconds, at least 16 fps. Input video duration is billed too.',
-    endpoints:{text:'alibaba/wan-3.0/text-to-video',image:'alibaba/wan-3.0/image-to-video',frames:'alibaba/wan-3.0/image-to-video',video:'alibaba/wan-3.0/reference-to-video'} },
+    endpoints:{} },
   { id:'seedance20', name:'Seedance 2.0', maker:'ByteDance', mode:'video', mark:'S',
     family:'seedance',description:'Video from prompts, frames, image & audio references',inputs:['text','image','frames','video'],
     ratios:[...videoRatios,'21:9'],resolutions:['480p','720p'],durations:seconds(4,15),
@@ -66,7 +65,7 @@ export const MODELS = [
     audioNote:'Up to 3 MP3 or WAV clips, 2–15 seconds each; 15 seconds total. Include at least one image or video.',
     videoNote:'Up to 9 images, 3 videos and 3 audio clips; 12 files total. Videos: 2–15 seconds total, under 50 MB combined, 480p–720p.',
     note:'4–15 seconds · 480p or 720p · optional native audio.',
-    endpoints:{text:'bytedance/seedance-2.0/text-to-video',image:'bytedance/seedance-2.0/image-to-video',frames:'bytedance/seedance-2.0/image-to-video',video:'bytedance/seedance-2.0/reference-to-video'} },
+    endpoints:{} },
   { id:'seedance25', name:'Seedance 2.5', maker:'ByteDance', mode:'video', mark:'S',
     family:'seedance',description:'Long clips from prompts & references',inputs:['text','image','frames','video'],
     ratios:[...videoRatios,'21:9'],resolutions:['480p','720p','1080p'],durations:seconds(4,30),
@@ -76,7 +75,7 @@ export const MODELS = [
     audioNote:'Each audio file must be 1.8–30.2 seconds; 30.2 seconds total.',
     videoRules:{minDuration:1.8,maxDuration:30.2,maxTotalDuration:30.2,minDimension:300,maxDimension:6000,minRatio:0.4,maxRatio:2.5},
     videoNote:'Up to 10 clips, 1.8–30.2 seconds each, totaling at most 30.2 seconds, at 24–60 fps. Each side: 300–6,000 px; aspect ratio: 0.4–2.5.',
-    endpoints:{text:'bytedance/seedance-2.5/text-to-video',image:'bytedance/seedance-2.5/image-to-video',frames:'bytedance/seedance-2.5/image-to-video',video:'bytedance/seedance-2.5/reference-to-video'} },
+    endpoints:{} },
   { id:'minimax-h3', name:'MiniMax H3', maker:'MiniMax', mode:'video', mark:'M',
     family:'minimax',description:'Frames, references & soundtrack control',inputs:['text','image','frames','end','video'],
     ratios:[...videoRatios,'21:9'],resolutions:['480p','768p','2K','4K'],durations:seconds(5,15),
@@ -86,15 +85,15 @@ export const MODELS = [
     videoRules:{minDuration:2,maxDuration:15,maxTotalDuration:15},
     videoNote:'Up to 3 clips, 2–15 seconds each, totaling at most 15 seconds. Refer to Video 1, Video 2, etc.',
     note:'Native audio is included. 2K and 4K upscale a 768p base result.',
-    endpoints:{text:'minimax/h3/text-to-video',image:'minimax/h3/image-to-video',frames:'minimax/h3/image-to-video',end:'minimax/h3/image-to-video',video:'minimax/h3/reference-to-video'} },
+    endpoints:{} },
   { id:'flux3-video', name:'FLUX Video', maker:'Black Forest Labs', mode:'video', mark:'F',
     promptLimits:{edit:4096},family:'flux-video',description:'First/last frames, keyframes & video edits',inputs:['text','image','frames','keyframes','video','edit'],
     ratios:[...videoRatios,'21:9','2:1'],resolutions:['720p','1080p'],durations:seconds(5,20),
     maxImages:1,maxVideos:1,videoMB:50,audioField:'generate_audio',videoAction:'Extend a video',
     videoRules:{maxDuration:15,exclusiveMaxDuration:true,contentTypes:['video/mp4']},
     videoNote:'One MP4 shorter than 15 seconds. Describe how the video continues from its final frames.',
-    endpoints:{text:'blackforestlabs/flux-3/text-to-video',image:'blackforestlabs/flux-3/image-to-video',frames:'blackforestlabs/flux-3/first-last-frame-to-video',keyframes:'blackforestlabs/flux-3/keyframes-to-video',video:'blackforestlabs/flux-3/extend-video',edit:'blackforestlabs/flux-3/edit-video'} },
-].map(model=>({available:true,minPrompt:1,maxPrompt:30000,...model,inputVersion:model.mode==='video'?2:undefined,docs:model.endpoints?docs(model.endpoints.text):'https://fal.ai/explore/bytedance'})).map(comfyModel);
+    endpoints:{} },
+].map(model=>({available:true,minPrompt:1,maxPrompt:30000,...model,inputVersion:model.mode==='video'?2:undefined,docs:'https://comfy.org/platform/router/'})).map(comfyModel);
 
 export const targetAudioAllowed=(model,inputType)=>Boolean(model.targetAudio)&&['text','image','frames','end'].includes(inputType);
 export function referenceLimitsFor(model,inputType){

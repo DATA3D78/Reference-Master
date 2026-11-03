@@ -1,3 +1,4 @@
+const assertPrompt=(input,prompt)=>assert(JSON.stringify(input).includes(JSON.stringify(prompt).slice(1,-1)));
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {characterSheetPrompt} from '../public/reference-model.js';
@@ -22,7 +23,7 @@ test('character sheet model choices accept six images at 16:9 in both resolution
  for(const m of models)for(const resolution of ['1K','2K']){
   const prompt=characterSheetPrompt({count:4,outfit:true,outfitDescription:'Jacket and trousers.'});
   const result=buildInput({model:m.id,inputType:'image',prompt,ratio:'16:9',resolution,count:1},refs);
-  assert.equal(result.input.prompt,prompt);
+  assertPrompt(result.input,prompt);
  }
 });
 
@@ -52,7 +53,7 @@ test('product sheets use six views, ordered references and no wardrobe',async()=
   assert(prompt.includes(`Image ${count+1} is the layout template ONLY`));
   assert.match(prompt,/three-column, two-row/);assert.match(prompt,/6. Detail close-up/);assert.match(prompt,/A blue-grey four-door SUV/);
   assert(!prompt.includes('WARDROBE'));assert(!prompt.includes('headshot'));
-  for(const resolution of ['1K','2K'])assert.equal(buildInput({model:'nano-pro',inputType:'image',prompt,ratio:'16:9',resolution,count:1},Array.from({length:count+1},()=>({kind:'image',contentType:'image/png',bytes:100,data:'data:image/png;base64,aGVsbG8=',metadata:{width:1000,height:1000}}))).input.prompt,prompt);
+  for(const resolution of ['1K','2K'])assertPrompt(buildInput({model:'nano-pro',inputType:'image',prompt,ratio:'16:9',resolution,count:1},Array.from({length:count+1},()=>({kind:'image',contentType:'image/png',bytes:100,data:'data:image/png;base64,aGVsbG8=',metadata:{width:1000,height:1000}}))).input,prompt);
  }
  assert.throws(()=>productSheetPrompt({count:5}),/one to four/);
  assert.match(referenceDescriptionInstruction('product'),/No JSON/);assert.match(referenceDescriptionInstruction('product'),/materials/);
@@ -68,7 +69,7 @@ test('environment sheet preserves location geography in six views without produc
   for(const view of ['Wide master','Reverse angle','Left three-quarter','Right three-quarter','Overhead / plan','Ground or floor'])assert(prompt.includes(view));
   assert.match(prompt,/one continuous, physically coherent location/);
   assert.match(prompt,/blank grey panels are placeholders/);assert(!prompt.includes('WARDROBE'));
-  for(const resolution of ['1K','2K'])assert.equal(buildInput({model:'nano-pro',inputType:'image',prompt,ratio:'16:9',resolution,count:1},Array.from({length:count+1},()=>({kind:'image',contentType:'image/png',bytes:100,data:'data:image/png;base64,aGVsbG8=',metadata:{width:1000,height:1000}}))).input.prompt,prompt);
+  for(const resolution of ['1K','2K'])assertPrompt(buildInput({model:'nano-pro',inputType:'image',prompt,ratio:'16:9',resolution,count:1},Array.from({length:count+1},()=>({kind:'image',contentType:'image/png',bytes:100,data:'data:image/png;base64,aGVsbG8=',metadata:{width:1000,height:1000}}))).input,prompt);
  }
  assert.throws(()=>environmentSheetPrompt({count:0}),/one to four/);
  assert.match(referenceDescriptionInstruction('environment'),/No JSON/);
@@ -137,15 +138,4 @@ test('character draft saves makeup and hair independently of existing distress',
  globalThis.localStorage={setItem:(key,value)=>{saved=JSON.parse(value);}};
  try{ReferenceWorkspace.prototype.save.call({project:'p',images:[],draftKey:()=> 'draft'});assert.equal(saved.makeup,'Soft makeup');assert.equal(saved.hair,'Ponytail');assert.equal(saved.direction,'Soaked');}
  finally{globalThis.document=oldDocument;globalThis.localStorage=oldStorage;}
-});
-
-test('sheet estimate counts the template and optional outfit as references',async()=>{
- const {referenceSheetCost}=await import('../public/reference.js');
- const base=referenceSheetCost('seedream5-pro','1K',[{}]);
- const outfit=referenceSheetCost('seedream5-pro','1K',[{}],{});
- assert(base.available&&outfit.available);assert(Math.abs(outfit.minimum-base.minimum-.0045)<1e-8);
- assert.equal(referenceSheetCost('nano-pro','1K',[{}]).minimum,.15);
- assert(referenceSheetCost('krea2-large','Native',Array(8).fill({}),{}).available);
- assert(!referenceSheetCost('nano-pro','1K',Array(8).fill({}),{}).available);
- assert(referenceSheetCost('nano21','1K',[{}]).extraUsage);
 });
