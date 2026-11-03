@@ -94,8 +94,7 @@ function applyInterfaceTheme(id,{persist=true}={}){
   $$('#theme-choices input').forEach(input=>input.checked=input.value===theme.id);
   $('#theme-status').textContent=stored?`${theme.name} · Saved automatically.`:`${theme.name} · Applied for this tab.`;
   document.querySelector('meta[name="theme-color"]').content=getComputedStyle(document.body).backgroundColor;
-  const brand=$('.brand svg'),iconLink=document.querySelector('link[rel="icon"]');
-  if(brand&&iconLink){const favicon=brand.cloneNode(true);favicon.setAttribute('xmlns','http://www.w3.org/2000/svg');favicon.setAttribute('fill',getComputedStyle(brand).color);favicon.setAttribute('stroke','none');iconLink.href='data:image/svg+xml,'+encodeURIComponent(new XMLSerializer().serializeToString(favicon));}
+  // Keep the explicit purple-and-yellow favicon from index.html across themes.
 }
 applyInterfaceTheme(document.documentElement.dataset.theme,{persist:false});
 $('#theme-choices').addEventListener('change',event=>{if(event.target.matches('input[name="interface-theme"]'))applyInterfaceTheme(event.target.value);});
