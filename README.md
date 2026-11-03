@@ -39,6 +39,36 @@ If the default port is busy, use `PORT=4323 npm start` on macOS/Linux or `$env:P
 - Comfy Router image/video generation, descriptions and prompt refinement.
 - Comfy Chrome and other interface themes.
 
+## Character Creator:
+Create a character from scratch or an image. Customize age, ethnicity, hair, eyes, facial and body features, height, and weight. Generate consistent full-body views and headshots as references for future creations.
+<img width="1920" height="1080" alt="CHARACTER CREATOR" src="https://github.com/user-attachments/assets/516b5d02-d7f1-4146-9365-d23ade03d443" />
+
+## Outfit Creator:
+Extract an outfit from a photo and display it on a plain background or mannequin, ready to use as a reference to dress any character.
+<img width="1920" height="1080" alt="OUTFIT CREATOR" src="https://github.com/user-attachments/assets/aaa120fa-5336-46aa-844a-09da48e7615a" />
+
+## Character Sheet:
+Dress a created or imported character using an outfit from Outfit Extractor. Add rain, dirt, wear, or battle damage, and adjust makeup and hairstyle to match the scene.
+<img width="1920" height="1080" alt="CHARCTER ID" src="https://github.com/user-attachments/assets/5560059b-d8ac-4817-a25e-a726b3200649" />
+
+## Product Sheet:
+Import one or more images to generate a detailed product reference sheet with multiple angles, close-ups, and specific feature views.
+<img width="1920" height="1080" alt="PRODUCT ID" src="https://github.com/user-attachments/assets/36403dfa-0947-40cf-8926-fd3e14562c82" />
+
+## Location Sheet:
+mport one or more images of an indoor or outdoor location to generate a detailed reference board with multiple angles, wide views, and close-ups.
+<img width="1920" height="1080" alt="LOCATION ID" src="https://github.com/user-attachments/assets/b2953ec2-b1a0-41c3-8829-172a22210260" />
+
+## Photo Shoot:
+Turn any image into an editable JSON prompt organized by section. Swap characters, outfits, products, or objects, adjust lighting and depth of field, and generate a consistent series of images across multiple formats and variations.
+<img width="1920" height="1080" alt="SHOOT" src="https://github.com/user-attachments/assets/5b1551a1-2f4b-44e7-85b1-1440fd79d54a" />
+
+## Assets Managment:
+Keep every generation organized by category, with custom names and tags for easy search and reuse. Integrate it into your existing image and video generation platform to keep all assets within reach.
+<img width="1920" height="1080" alt="ASSETS" src="https://github.com/user-attachments/assets/637108a0-8455-4b62-86ee-25283b765044" />
+
+####################################################
+
 All enabled model calls use Comfy Router. Audio generation, utility tools, grading and effects are not included in this release.
 
 ## Modify the code
