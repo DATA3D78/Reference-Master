@@ -1,0 +1,208 @@
+{
+  "input": {
+    "anyOf": [
+      {
+        "required": [
+          "prompt"
+        ]
+      },
+      {
+        "required": [
+          "image"
+        ]
+      }
+    ],
+    "properties": {
+      "guidance_scale": {
+        "format": "float",
+        "maximum": 10,
+        "minimum": 1,
+        "type": "number"
+      },
+      "image": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 14,
+            "minItems": 1,
+            "type": "array"
+          }
+        ]
+      },
+      "layer_decomposition": {
+        "default": false,
+        "type": "boolean"
+      },
+      "model": {
+        "nullable": true,
+        "type": "string"
+      },
+      "optimize_prompt_options": {
+        "properties": {
+          "mode": {
+            "default": "standard",
+            "enum": [
+              "standard",
+              "fast"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "output_format": {
+        "default": "jpeg",
+        "enum": [
+          "png",
+          "jpeg"
+        ],
+        "type": "string"
+      },
+      "prompt": {
+        "type": "string"
+      },
+      "response_format": {
+        "default": "url",
+        "enum": [
+          "url",
+          "b64_json"
+        ],
+        "type": "string"
+      },
+      "seed": {
+        "default": -1,
+        "maximum": 2147483647,
+        "minimum": -1,
+        "type": "integer"
+      },
+      "sequential_image_generation": {
+        "enum": [
+          "auto",
+          "disabled"
+        ],
+        "type": "string"
+      },
+      "sequential_image_generation_options": {
+        "properties": {
+          "max_images": {
+            "default": 15,
+            "maximum": 15,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "size": {
+        "type": "string"
+      },
+      "stream": {
+        "default": false,
+        "type": "boolean"
+      },
+      "watermark": {
+        "default": true,
+        "type": "boolean"
+      }
+    },
+    "type": "object"
+  },
+  "definitions": {
+    "BytePlusErrorCode": {
+      "externalDocs": {
+        "url": "https://docs.byteplus.com/en/docs/ModelArk/1299023"
+      },
+      "type": "string"
+    },
+    "BytePlusImageGenerationResponse": {
+      "properties": {
+        "created": {
+          "type": "integer"
+        },
+        "data": {
+          "items": {
+            "properties": {
+              "b64_json": {
+                "type": "string"
+              },
+              "bounding_box": {
+                "properties": {
+                  "absolute": {
+                    "items": {
+                      "type": "integer"
+                    },
+                    "type": "array"
+                  },
+                  "normalized": {
+                    "items": {
+                      "type": "integer"
+                    },
+                    "type": "array"
+                  }
+                },
+                "type": "object"
+              },
+              "name": {
+                "type": "string"
+              },
+              "output_format": {
+                "type": "string"
+              },
+              "size": {
+                "type": "string"
+              },
+              "url": {
+                "format": "uri",
+                "type": "string"
+              },
+              "z_index": {
+                "type": "integer"
+              }
+            },
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "error": {
+          "properties": {
+            "code": {
+              "$ref": "#/components/schemas/BytePlusErrorCode"
+            },
+            "message": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "model": {
+          "type": "string"
+        },
+        "usage": {
+          "properties": {
+            "generated_images": {
+              "type": "integer"
+            },
+            "input_images": {
+              "type": "integer"
+            },
+            "output_tokens": {
+              "type": "integer"
+            },
+            "total_tokens": {
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "source": "https://docs.comfy.org/router-schemas/byteplus/seedream-5-0-260128.json",
+  "checkedAt": "2026-10-19"
+}

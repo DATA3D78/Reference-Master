@@ -1,0 +1,120 @@
+{
+  "input": {
+    "additionalProperties": false,
+    "properties": {
+      "aspect_ratio": {
+        "default": "auto",
+        "type": "string"
+      },
+      "draft": {
+        "default": false,
+        "type": "boolean"
+      },
+      "draft_cache": {
+        "type": "string"
+      },
+      "duration": {
+        "default": "auto",
+        "oneOf": [
+          {
+            "maximum": 20,
+            "minimum": 5,
+            "type": "integer"
+          },
+          {
+            "type": "string"
+          }
+        ]
+      },
+      "generate_audio": {
+        "default": true,
+        "type": "boolean"
+      },
+      "keyframes": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "items": {
+              "oneOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "maxItems": 2,
+            "minItems": 2,
+            "type": "array"
+          },
+          {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 10,
+            "minItems": 1,
+            "type": "array"
+          },
+          {
+            "items": {
+              "items": {
+                "oneOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "maxItems": 2,
+              "minItems": 2,
+              "type": "array"
+            },
+            "maxItems": 10,
+            "minItems": 1,
+            "type": "array"
+          }
+        ]
+      },
+      "mode": {
+        "type": "string"
+      },
+      "prompt": {
+        "type": "string"
+      },
+      "resolution": {
+        "enum": [
+          "hd",
+          "fhd",
+          "qhd",
+          "uhd"
+        ],
+        "type": "string"
+      },
+      "safety_tolerance": {
+        "default": 2,
+        "maximum": 4,
+        "minimum": 0,
+        "type": "integer"
+      },
+      "start_video": {
+        "type": "string"
+      },
+      "version": {
+        "default": "latest",
+        "type": "string"
+      }
+    },
+    "required": [
+      "mode"
+    ],
+    "type": "object"
+  },
+  "definitions": {},
+  "source": "https://docs.comfy.org/router-schemas/bfl/flux-3-video.json",
+  "checkedAt": "2026-10-19"
+}

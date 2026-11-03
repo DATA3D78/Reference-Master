@@ -1,0 +1,1 @@
+# Copy to REFERENCE_MASTER_COMFY_KEY.txt and put your own Comfy API key on one line.

@@ -1,0 +1,189 @@
+{
+  "input": {
+    "properties": {
+      "aspect_ratio": {
+        "enum": [
+          "1:1",
+          "4:3",
+          "3:2",
+          "16:9",
+          "2.35:1",
+          "4:5",
+          "2:3",
+          "9:16"
+        ],
+        "type": "string"
+      },
+      "creativity": {
+        "default": "medium",
+        "enum": [
+          "raw",
+          "low",
+          "medium",
+          "high"
+        ],
+        "type": "string"
+      },
+      "image_style_references": {
+        "items": {
+          "$ref": "#/components/schemas/KreaImageStyleReference"
+        },
+        "maxItems": 10,
+        "type": "array"
+      },
+      "moodboards": {
+        "items": {
+          "$ref": "#/components/schemas/KreaMoodboard"
+        },
+        "maxItems": 1,
+        "type": "array"
+      },
+      "prompt": {
+        "type": "string"
+      },
+      "resolution": {
+        "enum": [
+          "1K"
+        ],
+        "type": "string"
+      },
+      "seed": {
+        "nullable": true,
+        "type": "number"
+      },
+      "styles": {
+        "items": {
+          "$ref": "#/components/schemas/KreaStyle"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "prompt",
+      "aspect_ratio",
+      "resolution"
+    ],
+    "type": "object"
+  },
+  "definitions": {
+    "KreaImageStyleReference": {
+      "properties": {
+        "strength": {
+          "format": "double",
+          "maximum": 2,
+          "minimum": -2,
+          "type": "number"
+        },
+        "url": {
+          "format": "uri",
+          "type": "string"
+        }
+      },
+      "required": [
+        "strength"
+      ],
+      "type": "object"
+    },
+    "KreaJob": {
+      "properties": {
+        "completed_at": {
+          "format": "date-time",
+          "nullable": true,
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "job_id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "result": {
+          "allOf": [
+            {
+              "$ref": "#/components/schemas/KreaJobResult"
+            }
+          ],
+          "nullable": true
+        },
+        "status": {
+          "enum": [
+            "backlogged",
+            "queued",
+            "scheduled",
+            "processing",
+            "sampling",
+            "intermediate-complete",
+            "completed",
+            "failed",
+            "cancelled"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "job_id",
+        "status",
+        "created_at",
+        "completed_at",
+        "result"
+      ],
+      "type": "object"
+    },
+    "KreaJobResult": {
+      "properties": {
+        "style_id": {
+          "type": "string"
+        },
+        "urls": {
+          "items": {
+            "format": "uri",
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "KreaMoodboard": {
+      "properties": {
+        "id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "strength": {
+          "default": 0.35,
+          "format": "double",
+          "maximum": 1.5,
+          "minimum": -0.5,
+          "type": "number"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    },
+    "KreaStyle": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "strength": {
+          "format": "double",
+          "maximum": 2,
+          "minimum": -2,
+          "type": "number"
+        }
+      },
+      "required": [
+        "id",
+        "strength"
+      ],
+      "type": "object"
+    }
+  },
+  "source": "https://docs.comfy.org/router-schemas/krea/krea-2-medium-turbo.json",
+  "checkedAt": "2026-10-19"
+}

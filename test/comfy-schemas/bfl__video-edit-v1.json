@@ -1,0 +1,81 @@
+{
+  "input": {
+    "properties": {
+      "prompt": {
+        "maxLength": 4096,
+        "minLength": 1,
+        "type": "string"
+      },
+      "safety_tolerance": {
+        "default": 2,
+        "maximum": 4,
+        "minimum": 0,
+        "type": "integer"
+      },
+      "video": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "video",
+      "prompt"
+    ],
+    "type": "object"
+  },
+  "definitions": {
+    "BFLFlux3Result": {
+      "properties": {
+        "cost": {
+          "format": "float",
+          "nullable": true,
+          "type": "number"
+        },
+        "sample": {
+          "format": "uri",
+          "type": "string"
+        }
+      },
+      "required": [
+        "sample"
+      ],
+      "type": "object"
+    },
+    "BFLFlux3ResultResponse": {
+      "properties": {
+        "cost": {
+          "format": "float",
+          "nullable": true,
+          "type": "number"
+        },
+        "id": {
+          "type": "string"
+        },
+        "progress": {
+          "format": "float",
+          "maximum": 1,
+          "minimum": 0,
+          "nullable": true,
+          "type": "number"
+        },
+        "result": {
+          "allOf": [
+            {
+              "$ref": "#/components/schemas/BFLFlux3Result"
+            }
+          ],
+          "nullable": true
+        },
+        "status": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "status"
+      ],
+      "type": "object"
+    }
+  },
+  "source": "https://docs.comfy.org/router-schemas/bfl/video-edit-v1.json",
+  "checkedAt": "2026-10-19"
+}

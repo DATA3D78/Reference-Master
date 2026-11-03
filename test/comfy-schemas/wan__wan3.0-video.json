@@ -1,0 +1,281 @@
+{
+  "input": {
+    "properties": {
+      "input": {
+        "properties": {
+          "audio_url": {
+            "type": "string"
+          },
+          "img_url": {
+            "type": "string"
+          },
+          "media": {
+            "items": {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "first_frame",
+                    "last_frame",
+                    "driving_audio",
+                    "first_clip",
+                    "reference_image",
+                    "reference_video",
+                    "reference_audio",
+                    "video",
+                    "file",
+                    "link"
+                  ],
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "type",
+                "url"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "negative_prompt": {
+            "maxLength": 500,
+            "type": "string"
+          },
+          "prompt": {
+            "maxLength": 20000,
+            "type": "string"
+          },
+          "reference_video_urls": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 3,
+            "minItems": 1,
+            "type": "array"
+          },
+          "template": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "model": {
+        "nullable": true,
+        "type": "string"
+      },
+      "parameters": {
+        "properties": {
+          "audio": {
+            "default": true,
+            "type": "boolean"
+          },
+          "audio_setting": {
+            "default": "auto",
+            "enum": [
+              "auto",
+              "origin"
+            ],
+            "type": "string"
+          },
+          "duration": {
+            "default": 5,
+            "maximum": 30,
+            "minimum": -1,
+            "type": "integer"
+          },
+          "prompt_extend": {
+            "default": true,
+            "type": "boolean"
+          },
+          "ratio": {
+            "enum": [
+              "adaptive",
+              "16:9",
+              "9:16",
+              "1:1",
+              "4:3",
+              "3:4"
+            ],
+            "type": "string"
+          },
+          "resolution": {
+            "enum": [
+              "480P",
+              "720P",
+              "1080P"
+            ],
+            "type": "string"
+          },
+          "seed": {
+            "maximum": 2147483647,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "shot_type": {
+            "default": "single",
+            "enum": [
+              "multi",
+              "single"
+            ],
+            "type": "string"
+          },
+          "size": {
+            "type": "string"
+          },
+          "watermark": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      }
+    },
+    "required": [
+      "input"
+    ],
+    "type": "object"
+  },
+  "definitions": {
+    "WanTaskQueryResponse": {
+      "properties": {
+        "output": {
+          "properties": {
+            "actual_prompt": {
+              "type": "string"
+            },
+            "check_audio": {
+              "type": "string"
+            },
+            "code": {
+              "type": "string"
+            },
+            "end_time": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "orig_prompt": {
+              "type": "string"
+            },
+            "results": {
+              "items": {
+                "properties": {
+                  "actual_prompt": {
+                    "type": "string"
+                  },
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "orig_prompt": {
+                    "type": "string"
+                  },
+                  "url": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "scheduled_time": {
+              "type": "string"
+            },
+            "submit_time": {
+              "type": "string"
+            },
+            "task_id": {
+              "type": "string"
+            },
+            "task_metrics": {
+              "properties": {
+                "FAILED": {
+                  "type": "integer"
+                },
+                "SUCCEEDED": {
+                  "type": "integer"
+                },
+                "TOTAL": {
+                  "type": "integer"
+                }
+              },
+              "type": "object"
+            },
+            "task_status": {
+              "enum": [
+                "PENDING",
+                "RUNNING",
+                "SUCCEEDED",
+                "FAILED",
+                "CANCELED",
+                "UNKNOWN"
+              ],
+              "type": "string"
+            },
+            "video_url": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "task_id",
+            "task_status"
+          ],
+          "type": "object"
+        },
+        "request_id": {
+          "type": "string"
+        },
+        "usage": {
+          "properties": {
+            "SR": {
+              "type": "integer"
+            },
+            "duration": {
+              "type": "number"
+            },
+            "fps": {
+              "type": "integer"
+            },
+            "image_count": {
+              "type": "integer"
+            },
+            "input_video_duration": {
+              "type": "number"
+            },
+            "output_video_duration": {
+              "type": "number"
+            },
+            "ratio": {
+              "type": "string"
+            },
+            "size": {
+              "type": "string"
+            },
+            "video_count": {
+              "type": "integer"
+            },
+            "video_duration": {
+              "type": "number"
+            },
+            "video_ratio": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "required": [
+        "request_id",
+        "output"
+      ],
+      "type": "object"
+    }
+  },
+  "source": "https://docs.comfy.org/router-schemas/wan/wan3.0-video.json",
+  "checkedAt": "2026-10-19"
+}

@@ -1,0 +1,526 @@
+{
+  "input": {
+    "properties": {
+      "contents": {
+        "items": {
+          "$ref": "#/components/schemas/GeminiContent"
+        },
+        "type": "array"
+      },
+      "generationConfig": {
+        "$ref": "#/components/schemas/GeminiGenerationConfig"
+      },
+      "safetySettings": {
+        "items": {
+          "$ref": "#/components/schemas/GeminiSafetySetting"
+        },
+        "type": "array"
+      },
+      "systemInstruction": {
+        "$ref": "#/components/schemas/GeminiSystemInstructionContent"
+      },
+      "tools": {
+        "items": {
+          "$ref": "#/components/schemas/GeminiTool"
+        },
+        "type": "array"
+      },
+      "uploadImagesToStorage": {
+        "type": "boolean"
+      },
+      "videoMetadata": {
+        "$ref": "#/components/schemas/GeminiVideoMetadata"
+      }
+    },
+    "required": [
+      "contents"
+    ],
+    "type": "object"
+  },
+  "definitions": {
+    "GeminiCandidate": {
+      "properties": {
+        "citationMetadata": {
+          "$ref": "#/components/schemas/GeminiCitationMetadata"
+        },
+        "content": {
+          "$ref": "#/components/schemas/GeminiContent"
+        },
+        "finishReason": {
+          "type": "string"
+        },
+        "safetyRatings": {
+          "items": {
+            "$ref": "#/components/schemas/GeminiSafetyRating"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "GeminiCitation": {
+      "properties": {
+        "authors": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "endIndex": {
+          "type": "integer"
+        },
+        "license": {
+          "type": "string"
+        },
+        "publicationDate": {
+          "format": "date",
+          "type": "string"
+        },
+        "startIndex": {
+          "type": "integer"
+        },
+        "title": {
+          "type": "string"
+        },
+        "uri": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "GeminiCitationMetadata": {
+      "properties": {
+        "citations": {
+          "items": {
+            "$ref": "#/components/schemas/GeminiCitation"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "GeminiContent": {
+      "properties": {
+        "parts": {
+          "items": {
+            "$ref": "#/components/schemas/GeminiPart"
+          },
+          "type": "array"
+        },
+        "role": {
+          "enum": [
+            "user",
+            "model"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "parts"
+      ],
+      "type": "object"
+    },
+    "GeminiFileData": {
+      "properties": {
+        "fileUri": {
+          "type": "string"
+        },
+        "mimeType": {
+          "$ref": "#/components/schemas/GeminiMimeType"
+        }
+      },
+      "type": "object"
+    },
+    "GeminiFunctionDeclaration": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "parameters": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "GeminiGenerateContentResponse": {
+      "properties": {
+        "candidates": {
+          "items": {
+            "$ref": "#/components/schemas/GeminiCandidate"
+          },
+          "type": "array"
+        },
+        "createTime": {
+          "type": "string"
+        },
+        "modelVersion": {
+          "type": "string"
+        },
+        "promptFeedback": {
+          "$ref": "#/components/schemas/GeminiPromptFeedback"
+        },
+        "responseId": {
+          "type": "string"
+        },
+        "usageMetadata": {
+          "$ref": "#/components/schemas/GeminiUsageMetadata"
+        }
+      },
+      "type": "object"
+    },
+    "GeminiGenerationConfig": {
+      "properties": {
+        "imageConfig": {
+          "properties": {
+            "aspectRatio": {
+              "type": "string"
+            },
+            "imageOutputOptions": {
+              "properties": {
+                "compressionQuality": {
+                  "type": "integer"
+                },
+                "mimeType": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "imageSize": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "maxOutputTokens": {
+          "maximum": 65536,
+          "minimum": 16,
+          "type": "integer"
+        },
+        "responseModalities": {
+          "items": {
+            "enum": [
+              "TEXT",
+              "IMAGE"
+            ],
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "seed": {
+          "type": "integer"
+        },
+        "stopSequences": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "temperature": {
+          "default": 1,
+          "format": "float",
+          "maximum": 2,
+          "minimum": 0,
+          "type": "number"
+        },
+        "thinkingConfig": {
+          "properties": {
+            "includeThoughts": {
+              "type": "boolean"
+            },
+            "thinkingBudget": {
+              "type": "integer"
+            },
+            "thinkingLevel": {
+              "enum": [
+                "THINKING_LEVEL_UNSPECIFIED",
+                "LOW",
+                "MEDIUM",
+                "HIGH",
+                "MINIMAL"
+              ],
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "topK": {
+          "default": 40,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "topP": {
+          "default": 0.95,
+          "format": "float",
+          "maximum": 1,
+          "minimum": 0,
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "GeminiInlineData": {
+      "properties": {
+        "data": {
+          "format": "byte",
+          "type": "string"
+        },
+        "mimeType": {
+          "$ref": "#/components/schemas/GeminiMimeType"
+        }
+      },
+      "type": "object"
+    },
+    "GeminiMimeType": {
+      "enum": [
+        "application/pdf",
+        "audio/mpeg",
+        "audio/mp3",
+        "audio/wav",
+        "image/png",
+        "image/jpeg",
+        "image/webp",
+        "text/plain",
+        "video/mov",
+        "video/mpeg",
+        "video/mp4",
+        "video/mpg",
+        "video/avi",
+        "video/wmv",
+        "video/mpegps",
+        "video/flv",
+        "image/heic",
+        "image/heif",
+        "audio/flac",
+        "video/webm"
+      ],
+      "type": "string"
+    },
+    "GeminiOffset": {
+      "properties": {
+        "nanos": {
+          "maximum": 999999999,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "seconds": {
+          "maximum": 315576000000,
+          "minimum": -315576000000,
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "GeminiPart": {
+      "properties": {
+        "fileData": {
+          "$ref": "#/components/schemas/GeminiFileData"
+        },
+        "inlineData": {
+          "$ref": "#/components/schemas/GeminiInlineData"
+        },
+        "mediaProcessing": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        },
+        "thought": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "GeminiPromptFeedback": {
+      "properties": {
+        "blockReason": {
+          "type": "string"
+        },
+        "blockReasonMessage": {
+          "type": "string"
+        },
+        "safetyRatings": {
+          "items": {
+            "$ref": "#/components/schemas/GeminiSafetyRating"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "GeminiSafetyCategory": {
+      "enum": [
+        "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+        "HARM_CATEGORY_HATE_SPEECH",
+        "HARM_CATEGORY_HARASSMENT",
+        "HARM_CATEGORY_DANGEROUS_CONTENT"
+      ],
+      "type": "string"
+    },
+    "GeminiSafetyRating": {
+      "properties": {
+        "category": {
+          "$ref": "#/components/schemas/GeminiSafetyCategory"
+        },
+        "probability": {
+          "enum": [
+            "NEGLIGIBLE",
+            "LOW",
+            "MEDIUM",
+            "HIGH",
+            "UNKNOWN"
+          ],
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "GeminiSafetySetting": {
+      "properties": {
+        "category": {
+          "$ref": "#/components/schemas/GeminiSafetyCategory"
+        },
+        "threshold": {
+          "$ref": "#/components/schemas/GeminiSafetyThreshold"
+        }
+      },
+      "required": [
+        "category",
+        "threshold"
+      ],
+      "type": "object"
+    },
+    "GeminiSafetyThreshold": {
+      "enum": [
+        "OFF",
+        "BLOCK_NONE",
+        "BLOCK_LOW_AND_ABOVE",
+        "BLOCK_MEDIUM_AND_ABOVE",
+        "BLOCK_ONLY_HIGH"
+      ],
+      "type": "string"
+    },
+    "GeminiSystemInstructionContent": {
+      "properties": {
+        "parts": {
+          "items": {
+            "$ref": "#/components/schemas/GeminiTextPart"
+          },
+          "type": "array"
+        },
+        "role": {
+          "enum": [
+            "user",
+            "model"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "parts"
+      ],
+      "type": "object"
+    },
+    "GeminiTextPart": {
+      "properties": {
+        "text": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "GeminiTool": {
+      "properties": {
+        "functionDeclarations": {
+          "items": {
+            "$ref": "#/components/schemas/GeminiFunctionDeclaration"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "GeminiUsageMetadata": {
+      "properties": {
+        "cachedContentTokenCount": {
+          "type": "integer"
+        },
+        "candidatesTokenCount": {
+          "type": "integer"
+        },
+        "candidatesTokensDetails": {
+          "items": {
+            "$ref": "#/components/schemas/ModalityTokenCount"
+          },
+          "type": "array"
+        },
+        "promptTokenCount": {
+          "type": "integer"
+        },
+        "promptTokensDetails": {
+          "items": {
+            "$ref": "#/components/schemas/ModalityTokenCount"
+          },
+          "type": "array"
+        },
+        "thoughtsTokenCount": {
+          "type": "integer"
+        },
+        "toolUsePromptTokenCount": {
+          "type": "integer"
+        },
+        "toolUsePromptTokensDetails": {
+          "items": {
+            "$ref": "#/components/schemas/ModalityTokenCount"
+          },
+          "type": "array"
+        },
+        "totalTokenCount": {
+          "type": "integer"
+        },
+        "trafficType": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "GeminiVideoMetadata": {
+      "properties": {
+        "endOffset": {
+          "$ref": "#/components/schemas/GeminiOffset"
+        },
+        "startOffset": {
+          "$ref": "#/components/schemas/GeminiOffset"
+        }
+      },
+      "type": "object"
+    },
+    "Modality": {
+      "enum": [
+        "MODALITY_UNSPECIFIED",
+        "TEXT",
+        "IMAGE",
+        "VIDEO",
+        "AUDIO",
+        "DOCUMENT"
+      ],
+      "type": "string"
+    },
+    "ModalityTokenCount": {
+      "properties": {
+        "modality": {
+          "$ref": "#/components/schemas/Modality"
+        },
+        "tokenCount": {
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "source": "https://docs.comfy.org/router-schemas/vertexai/gemini-nano-banana-2.1.json",
+  "checkedAt": "2026-10-19"
+}

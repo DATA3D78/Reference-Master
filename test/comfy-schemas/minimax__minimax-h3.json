@@ -1,0 +1,169 @@
+{
+  "input": {
+    "properties": {
+      "aigc_watermark": {
+        "type": "boolean"
+      },
+      "callback_url": {
+        "type": "string"
+      },
+      "content": {
+        "items": {
+          "$ref": "#/components/schemas/MinimaxV2ContentItem"
+        },
+        "type": "array"
+      },
+      "duration": {
+        "maximum": 15,
+        "minimum": 4,
+        "type": "integer"
+      },
+      "model": {
+        "nullable": true,
+        "type": "string"
+      },
+      "ratio": {
+        "type": "string"
+      },
+      "resolution": {
+        "enum": [
+          "2K",
+          "2k",
+          "768P",
+          "768p"
+        ],
+        "type": "string"
+      },
+      "seed": {
+        "format": "int64",
+        "type": "integer"
+      }
+    },
+    "required": [
+      "content",
+      "resolution",
+      "duration"
+    ],
+    "type": "object"
+  },
+  "definitions": {
+    "MinimaxV2ContentItem": {
+      "properties": {
+        "audio_url": {
+          "properties": {
+            "url": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "image_url": {
+          "properties": {
+            "url": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "role": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "video_url": {
+          "properties": {
+            "url": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "MinimaxV2TaskResult": {
+      "properties": {
+        "content": {
+          "properties": {
+            "prompt": {
+              "type": "string"
+            },
+            "url": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "duration": {
+          "type": "number"
+        },
+        "error": {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        "id": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "ratio": {
+          "type": "string"
+        },
+        "resolution": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "task_type": {
+          "type": "string"
+        },
+        "usage": {
+          "properties": {
+            "completion_tokens": {
+              "type": "integer"
+            },
+            "input_image_count": {
+              "type": "integer"
+            },
+            "input_seconds": {
+              "type": "number"
+            },
+            "output_seconds": {
+              "type": "number"
+            },
+            "prompt_tokens": {
+              "type": "integer"
+            },
+            "total_seconds": {
+              "type": "number"
+            },
+            "total_tokens": {
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "MinimaxV2TaskResultResponse": {
+      "properties": {
+        "task": {
+          "$ref": "#/components/schemas/MinimaxV2TaskResult"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "source": "https://docs.comfy.org/router-schemas/minimax/minimax-h3.json",
+  "checkedAt": "2026-10-19"
+}

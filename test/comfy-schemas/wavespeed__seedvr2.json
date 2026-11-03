@@ -1,0 +1,38 @@
+{
+  "input": {
+    "properties": {
+      "enable_base64_output": {
+        "default": false,
+        "type": "boolean"
+      },
+      "image": {
+        "type": "string"
+      },
+      "output_format": {
+        "default": "jpeg",
+        "enum": [
+          "jpeg",
+          "png",
+          "webp"
+        ],
+        "type": "string"
+      },
+      "target_resolution": {
+        "default": "4k",
+        "enum": [
+          "2k",
+          "4k",
+          "8k"
+        ],
+        "type": "string"
+      }
+    },
+    "required": [
+      "image"
+    ],
+    "type": "object"
+  },
+  "definitions": {},
+  "source": "https://docs.comfy.org/router-schemas/wavespeed/seedvr2.json",
+  "checkedAt": "2026-10-19"
+}

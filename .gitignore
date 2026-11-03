@@ -1,0 +1,13 @@
+.local/
+node_modules/
+.env
+.env.*
+!.env.example
+.DS_Store
+*.log
+CUSTOM/*KEY*.txt
+!CUSTOM/*.example.txt
+*API_KEY*.txt
+*.rtf
+releases/
+launcher/select-media-folder

@@ -1,0 +1,107 @@
+{
+  "input": {
+    "additionalProperties": false,
+    "properties": {
+      "aspect_ratio": {
+        "default": "auto",
+        "type": "string"
+      },
+      "grounding": {
+        "default": true,
+        "type": "boolean"
+      },
+      "images": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 10,
+            "minItems": 1,
+            "type": "array"
+          }
+        ]
+      },
+      "prompt": {
+        "type": "string"
+      },
+      "resolution": {
+        "default": "1k",
+        "type": "string"
+      },
+      "safety_tolerance": {
+        "default": 2,
+        "maximum": 4,
+        "minimum": 0,
+        "type": "integer"
+      },
+      "version": {
+        "default": "latest",
+        "type": "string"
+      }
+    },
+    "required": [
+      "prompt"
+    ],
+    "type": "object"
+  },
+  "definitions": {
+    "BFLFlux3Result": {
+      "properties": {
+        "cost": {
+          "format": "float",
+          "nullable": true,
+          "type": "number"
+        },
+        "sample": {
+          "format": "uri",
+          "type": "string"
+        }
+      },
+      "required": [
+        "sample"
+      ],
+      "type": "object"
+    },
+    "BFLFlux3ResultResponse": {
+      "properties": {
+        "cost": {
+          "format": "float",
+          "nullable": true,
+          "type": "number"
+        },
+        "id": {
+          "type": "string"
+        },
+        "progress": {
+          "format": "float",
+          "maximum": 1,
+          "minimum": 0,
+          "nullable": true,
+          "type": "number"
+        },
+        "result": {
+          "allOf": [
+            {
+              "$ref": "#/components/schemas/BFLFlux3Result"
+            }
+          ],
+          "nullable": true
+        },
+        "status": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "status"
+      ],
+      "type": "object"
+    }
+  },
+  "source": "https://docs.comfy.org/router-schemas/bfl/flux-3-image.json",
+  "checkedAt": "2026-10-19"
+}

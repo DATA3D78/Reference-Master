@@ -1,0 +1,168 @@
+{
+  "input": {
+    "properties": {
+      "background": {
+        "enum": [
+          "transparent",
+          "opaque",
+          "auto"
+        ],
+        "type": "string"
+      },
+      "image": {
+        "$ref": "#/components/schemas/OpenAIImageRouterSource"
+      },
+      "mask": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/OpenAIImageRouterMedia"
+          }
+        ]
+      },
+      "model": {
+        "type": "string"
+      },
+      "moderation": {
+        "enum": [
+          "low",
+          "auto"
+        ],
+        "type": "string"
+      },
+      "n": {
+        "maximum": 10,
+        "minimum": 1,
+        "type": "integer"
+      },
+      "output_compression": {
+        "maximum": 100,
+        "minimum": 0,
+        "type": "integer"
+      },
+      "output_format": {
+        "enum": [
+          "png",
+          "webp",
+          "jpeg"
+        ],
+        "type": "string"
+      },
+      "partial_images": {
+        "maximum": 3,
+        "minimum": 0,
+        "nullable": true,
+        "type": "integer"
+      },
+      "prompt": {
+        "type": "string"
+      },
+      "quality": {
+        "enum": [
+          "auto",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max",
+          "standard",
+          "hd"
+        ],
+        "type": "string"
+      },
+      "size": {
+        "type": "string"
+      },
+      "stream": {
+        "nullable": true,
+        "type": "boolean"
+      },
+      "user": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "prompt"
+    ],
+    "type": "object"
+  },
+  "definitions": {
+    "OpenAIImageGenerationResponse": {
+      "properties": {
+        "data": {
+          "items": {
+            "properties": {
+              "b64_json": {
+                "type": "string"
+              },
+              "revised_prompt": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "usage": {
+          "properties": {
+            "input_tokens": {
+              "type": "integer"
+            },
+            "input_tokens_details": {
+              "properties": {
+                "image_tokens": {
+                  "type": "integer"
+                },
+                "text_tokens": {
+                  "type": "integer"
+                }
+              },
+              "type": "object"
+            },
+            "output_tokens": {
+              "type": "integer"
+            },
+            "output_tokens_details": {
+              "properties": {
+                "image_tokens": {
+                  "type": "integer"
+                },
+                "text_tokens": {
+                  "type": "integer"
+                }
+              },
+              "type": "object"
+            },
+            "total_tokens": {
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "OpenAIImageRouterMedia": {
+      "type": "string"
+    },
+    "OpenAIImageRouterSource": {
+      "oneOf": [
+        {
+          "$ref": "#/components/schemas/OpenAIImageRouterMedia"
+        },
+        {
+          "items": {
+            "$ref": "#/components/schemas/OpenAIImageRouterMedia"
+          },
+          "maxItems": 16,
+          "minItems": 1,
+          "type": "array"
+        }
+      ]
+    }
+  },
+  "source": "https://docs.comfy.org/router-schemas/openai/gpt-image-2.5-flare.json",
+  "checkedAt": "2026-10-19"
+}

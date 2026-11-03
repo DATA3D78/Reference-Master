@@ -1,0 +1,189 @@
+{
+  "input": {
+    "properties": {
+      "audio_config": {
+        "$ref": "#/components/schemas/BytePlusTTSAudioConfig"
+      },
+      "model": {
+        "nullable": true,
+        "type": "string"
+      },
+      "references": {
+        "items": {
+          "$ref": "#/components/schemas/BytePlusTTSReference"
+        },
+        "maxItems": 3,
+        "type": "array"
+      },
+      "text_prompt": {
+        "maxLength": 3000,
+        "minLength": 1,
+        "type": "string"
+      },
+      "watermark": {
+        "$ref": "#/components/schemas/BytePlusTTSWatermark"
+      }
+    },
+    "required": [
+      "text_prompt"
+    ],
+    "type": "object"
+  },
+  "definitions": {
+    "BytePlusTTSAudioConfig": {
+      "properties": {
+        "enable_subtitle": {
+          "type": "boolean"
+        },
+        "format": {
+          "enum": [
+            "wav",
+            "mp3",
+            "pcm",
+            "ogg_opus"
+          ],
+          "type": "string"
+        },
+        "loudness_rate": {
+          "maximum": 100,
+          "minimum": -50,
+          "type": "integer"
+        },
+        "pitch_rate": {
+          "maximum": 12,
+          "minimum": -12,
+          "type": "integer"
+        },
+        "sample_rate": {
+          "enum": [
+            8000,
+            16000,
+            24000,
+            32000,
+            44100,
+            48000
+          ],
+          "type": "integer"
+        },
+        "speech_rate": {
+          "maximum": 100,
+          "minimum": -50,
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "BytePlusTTSCreateResponse": {
+      "properties": {
+        "audio": {
+          "type": "string"
+        },
+        "code": {
+          "type": "integer"
+        },
+        "duration": {
+          "format": "double",
+          "type": "number"
+        },
+        "message": {
+          "type": "string"
+        },
+        "original_duration": {
+          "format": "double",
+          "type": "number"
+        },
+        "subtitle": {
+          "$ref": "#/components/schemas/BytePlusTTSSubtitle"
+        },
+        "url": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "BytePlusTTSReference": {
+      "properties": {
+        "audio_data": {
+          "type": "string"
+        },
+        "audio_url": {
+          "type": "string"
+        },
+        "image_data": {
+          "type": "string"
+        },
+        "image_url": {
+          "type": "string"
+        },
+        "speaker": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "BytePlusTTSSubtitle": {
+      "properties": {
+        "sentences": {
+          "items": {
+            "$ref": "#/components/schemas/BytePlusTTSSubtitleSegment"
+          },
+          "type": "array"
+        },
+        "text": {
+          "type": "string"
+        },
+        "words": {
+          "items": {
+            "$ref": "#/components/schemas/BytePlusTTSSubtitleSegment"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "BytePlusTTSSubtitleSegment": {
+      "properties": {
+        "end_time": {
+          "type": "integer"
+        },
+        "start_time": {
+          "type": "integer"
+        },
+        "text": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "BytePlusTTSWatermark": {
+      "properties": {
+        "aigc_metadata": {
+          "properties": {
+            "content_producer": {
+              "type": "string"
+            },
+            "content_propagator": {
+              "type": "string"
+            },
+            "enable": {
+              "type": "boolean"
+            },
+            "produce_id": {
+              "type": "string"
+            },
+            "propagate_id": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "aigc_watermark": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "source": "https://docs.comfy.org/router-schemas/byteplus/seed-audio-1.0-multilingual.json",
+  "checkedAt": "2026-10-19"
+}
